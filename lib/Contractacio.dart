@@ -1,9 +1,10 @@
+import 'package:flutter/material.dart';
 import 'DatabaseRecord.dart';
 
 import 'Servei.dart';
 import 'Database.dart';
 
-import 'Table.dart';
+import 'Table.dart' as t;
 
 
 
@@ -40,7 +41,7 @@ class Contractacio implements DatabaseRecord{
   }
 
   // Crea una llista de contractacions a partir de un registre de wpdj_pagaia_qr_sympo2023
-  static List<Contractacio> fromCSV(String dades, Table<Servei> serveis){
+  static List<Contractacio> fromCSV(String dades, t.Table<Servei> serveis){
     var fields = dades.split(";");    // Camps Separats per ;
 
     List<Contractacio> contractacions = [];
@@ -57,6 +58,10 @@ class Contractacio implements DatabaseRecord{
     }
 
     return contractacions;
+  }
+
+  DateTimeRange valid(Database d){
+    return d.findServei(serveiId)!.valid;
   }
 
 

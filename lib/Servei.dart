@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'DatabaseRecord.dart';
 
+List<Color> colorsProductes = [Colors.pinkAccent, Colors.tealAccent, Colors.amberAccent, Colors.blueAccent,
+  Colors.cyanAccent, Colors.deepOrangeAccent, Colors.deepPurpleAccent, Colors.greenAccent, Colors.indigoAccent, Colors.lightBlueAccent, Colors.lightGreenAccent];
+List<Color> colorsProductes1 = [Colors.pink, Colors.teal, Colors.amber, Colors.blue,
+  Colors.cyan, Colors.deepOrange, Colors.deepPurple, Colors.green, Colors.indigo, Colors.lightBlue, Colors.lightGreen];
+
 class Servei  implements DatabaseRecord{
+
 
   int id;
   String name;

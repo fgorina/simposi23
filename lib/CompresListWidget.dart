@@ -1,6 +1,7 @@
 import 'package:decimal/decimal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import 'Database.dart';
@@ -12,6 +13,7 @@ import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 import 'IconAndFilesUtilities.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 class CompresListWidget extends StatefulWidget {
   @override
@@ -67,6 +69,20 @@ class _CompresListWidgetState extends State<CompresListWidget> {
     Database.displayAlert(context, "Error de Connexió", d.lastServerError);
   }
 
+  void shareCompres() async {
+    var data = d.shareCompresData();
+
+    // Save it to a file. That way we may share to Numbers directly
+    var path = await d.pathFor("shareCompres");
+    var file = File(path);
+    await file.writeAsString(data, flush: true);
+
+    var result = await Share.shareFilesWithResult([path]);
+
+  }
+
+
+
   Widget compraWidget(Compra compra, int index) {
     DateFormat formatter = DateFormat("dd/MM/yy");
     Participant? participant = d.findParticipant(compra.idParticipant);
@@ -120,6 +136,10 @@ class _CompresListWidgetState extends State<CompresListWidget> {
           color: Colors.red,
           onPressed: showError));
     }
+    icons.add (IconButton(
+        icon:  Icon(Platform.isAndroid ? Icons.share : CupertinoIcons.share),
+        onPressed: shareCompres));
+
 
     ScrollController controller = ScrollController();
 

@@ -68,7 +68,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    print("State $state");
 
       if (state == AppLifecycleState.resumed) {
             database.loadDataFromServer(true);

@@ -5,6 +5,7 @@ import 'Database.dart';
 import 'Participant.dart';
 import 'Contractacio.dart';
 import 'Servei.dart';
+
 import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 import 'Scanner.dart';
@@ -12,6 +13,8 @@ import 'SlideRoutes.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import 'RespostaWidget.dart';
+import 'dart:io';
+import 'package:share_plus/share_plus.dart';
 
 class ParticipantsListWidget extends StatefulWidget {
   final String title = "Participants";
@@ -105,16 +108,8 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
   Future consumeixServei(Servei servei, Participant participant, bool scanner) async {
 
     // Calcular la id de la contractacio :
-
-
     int id = participant.id*100 + servei.id;
-    String nomServei = servei.name;
-
-    Contractacio? contractacio = d.findContractacio(id);
-
     Widget resposta;
-
-
 
     resposta = RespostaWidget( participant, servei, "WAITING", "Waiting");
     await Navigator.push(context, SlideLeftRoute(widget:resposta));
@@ -188,13 +183,6 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
   }
 
   void selectParticipant(int id) async{
-  /*  try {
-      await d.updateParticipant(id);
-    }catch(e) {
-      print(e.toString());
-    }
-
-   */
       d.currentParticipant = d.findParticipant(id);
       d.currentContractacions = d.currentParticipant?.contractacions() ?? [];
       await Navigator.push(context, SlideLeftRoute(widget: ParticipantViewWidget()));
@@ -208,16 +196,30 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
 
   void scan() async{
     await scanQR((String s) {
-      validate(s, scanner:true);
-      print("Rebut "+s);
+      var lines = s.split(";");
+      var codi = lines[0];
+      validate(codi, scanner:true);
     });
   }
 
+  void shareParticipants() async {
+    var data = d.shareParticipantsData();
+
+    // Save it to a file. That way we may share to Numbers directly
+    var path = await d.pathFor("shareParticipants");
+    var file = File(path);
+    await file.writeAsString(data, flush: true);
+
+    var result = await Share.shareFilesWithResult([path]);
+
+  }
 
 
   void showError(){
     Database.displayAlert(context, "Error de Connexió", d.lastServerError);
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -237,7 +239,18 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
       icons.add(IconButton(icon: const Icon(Icons.warning_amber), color: Colors.red, onPressed: showError));
     }
 
-    icons.add( IconButton(icon: const Icon(Icons.qr_code), onPressed: scan));
+    if(Platform.isAndroid){
+      icons.add (IconButton(icon:  Icon(Icons.share), onPressed: shareParticipants));
+      icons.add( IconButton(icon: const Icon(Icons.qr_code), onPressed: scan));
+    }else if(Platform.isIOS){
+        icons.add (IconButton(icon:  Icon(CupertinoIcons.share), onPressed: shareParticipants));
+        icons.add( IconButton(icon: const Icon(Icons.qr_code), onPressed: scan));
+    }else{
+      icons.add (IconButton(icon:  Icon(CupertinoIcons.share), onPressed: shareParticipants));
+
+    }
+
+
 
     return KeyboardSizeProvider(
       smallSize: 500.0,

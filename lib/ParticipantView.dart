@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'Participant.dart';
 import 'Database.dart';
 import 'Servei.dart';
+import 'Producte.dart';
 import 'Contractacio.dart';
 import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
@@ -11,6 +13,8 @@ import 'dart:math';
 import 'Modalitat.dart';
 import 'ComprarWidget.dart';
 import 'SlideRoutes.dart';
+import 'package:barcode_widget/barcode_widget.dart';
+import 'package:intl/intl.dart';
 
 class ParticipantViewWidget extends StatefulWidget {
   final String title = "Participants";
@@ -22,8 +26,26 @@ class ParticipantViewWidget extends StatefulWidget {
 class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
   Database d = Database.shared;
 
+  List<Widget> stateIcons = [];
+
+  DateFormat df = DateFormat("dd/MM");
+
   void initState() {
     super.initState();
+    stateIcons = [
+      Icon(
+        Icons.no_accounts,
+        color: d.currentParticipant!.registrat ? Colors.red : Colors.pink,
+      ),
+      Icon(
+        Icons.check_circle_outline,
+        color: d.currentParticipant!.registrat ? Colors.green : Colors.pink,
+      ),
+      Icon(
+        Icons.check_circle,
+        color: Colors.red,
+      )
+    ];
     d.addSubscriptor(this);
     d.updateParticipant(d.currentParticipant!.id);
   }
@@ -42,7 +64,6 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
 
     if (_isTopOfNavigationStack) {
       setState(() {
-        print("Updating");
         d.currentParticipant = d.findParticipant(d.currentParticipant!.id);
         d.currentContractacions = d.currentParticipant!.contractacions();
       });
@@ -86,23 +107,43 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
     }
   }
 
+  Widget buildTile(Participant p, Producte pr) {
+    var serveis = d.searchServeisProducte(pr);
+    serveis.sort((a, b) => a.id.compareTo(b.id));
+
+    var contractacions = d.searchContractacionsParticipant(p).where((element) {
+      var servei = d.findServei(element.serveiId)!;
+      return servei.idProducte == pr.id;
+    }).toList();
+
+
+    print("${pr.name} $contractacions");
+    contractacions.sort((a, b) => a.id.compareTo(b.id));
+
+    List<Widget> icons = contractacions.map((contractacio) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.center, children: [
+        Text(df.format(contractacio.valid(d).start)),
+        IconButton(
+          icon: stateIcons[contractacio.estat],
+          onPressed: (contractacio.estat == 0 && p.registrat)
+              ? () {
+                  comprar(contractacio);
+                }
+              : null,
+        ),
+      ]);
+    }).toList();
+
+    return ListTile(
+        //tileColor: colorsProductes[pr.id % colorsProductes.length],
+        title: Text(pr.name),
+        subtitle: Row(
+            mainAxisAlignment: icons.length == 1 ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
+            children: icons));
+  }
+
   @override
   Widget build(BuildContext context) {
-    List<Widget> stateIcons = [
-      Icon(
-        Icons.no_accounts,
-        color: d.currentParticipant!.registrat ? Colors.red : Colors.pink,
-      ),
-      Icon(
-        Icons.check_circle_outline,
-        color: d.currentParticipant!.registrat ? Colors.green : Colors.pink,
-      ),
-      Icon(
-        Icons.check_circle,
-        color: Colors.red,
-      )
-    ];
-
     List<Widget> icons = [];
     int c = min(d.backLogCount(), 10);
     if (c > 0) {
@@ -143,7 +184,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
                 Text(modalitatName,
                     style:
                         TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(""),
+                Container(height: 10),
                 d.currentParticipant!.registrat
                     ? Text("")
                     : ElevatedButton(
@@ -154,11 +195,10 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
                         style: ElevatedButton.styleFrom(
-                          primary: Colors.pinkAccent,
-                            shape:
-                                RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18.0),
-                                    side: BorderSide(color: Colors.black)))),
+                            primary: Colors.pinkAccent,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18.0),
+                                side: BorderSide(color: Colors.black)))),
 
                 /*labeledSwitch("Esmorzars", d.currentParticipant!.esmorzars ,  null, enabled: false),
                 labeledSwitch("Setmana Paleig", d.currentParticipant!.setmana,  null, enabled: false),
@@ -169,32 +209,32 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
                  */
                 Text(""),
                 Container(
-                  height: screenHeight(context) - 280,
+                  height: screenHeight(context) - 353,
                   child: Scrollbar(
                     thumbVisibility: true,
                     controller: controller,
-                    child: ListView.builder(
-                      controller: controller,
-                        itemCount: d.currentContractacions.length,
+                    child: ListView.separated(
+                        controller: controller,
+                        itemCount: d.allProductes().length,
                         itemBuilder: (BuildContext context, int index) {
-                          return ListTile(
-                            title: Text(d.currentContractacions[index].name),
-                            trailing: IconButton(
-                              icon: stateIcons[
-                                  d.currentContractacions[index].estat],
-                              onPressed: (d.currentContractacions[index]
-                                              .estat ==
-                                          0 &&
-                                      d.currentParticipant!.registrat)
-                                  ? () {
-                                      comprar(d.currentContractacions[index]);
-                                    }
-                                  : null,
-                            ),
-                          );
-                        }),
+                          return buildTile(
+                              d.currentParticipant!, d.allProductes()[index]);
+                        },
+                    separatorBuilder: (BuildContext context, int index) {
+                          return Divider(color: Colors.grey);
+                    },
+                        ),
                   ),
                 ),
+                Spacer(),
+                Container(
+                  width: 100,
+                  height: 100,
+                  child: BarcodeWidget(
+                      data: d.paticipantCSV(d.currentParticipant!),
+                      barcode: Barcode.qrCode()),
+                ),
+                Spacer(),
               ],
             ),
           );

@@ -4,10 +4,12 @@ import 'package:flutter/services.dart';
 import 'dart:math';
 import 'Database.dart';
 import 'Servei.dart';
+
 import 'SlideRoutes.dart';
 import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 import 'IconAndFilesUtilities.dart';
+import 'Contractacio.dart';
 
 
 class ServeiListWidget extends StatefulWidget {
@@ -45,7 +47,23 @@ class _ServeiListWidgetState extends State<ServeiListWidget> {
     Database.displayAlert(context, "Error de Connexió", d.lastServerError);
   }
 
+  Widget buildTile(Servei servei, int index){
 
+    // Get number of participants which has payed and number which have already consumed
+
+    var payed = d.searchContractacions((p0) => (p0 as Contractacio).estat > 0 && (p0 as Contractacio).serveiId == servei.id).length;
+    var consumed = d.searchContractacions((p0) => (p0 as Contractacio).estat == 2 && (p0 as Contractacio).serveiId == servei.id).length;
+    return ListTile(
+      tileColor : colorsProductes1[servei.idProducte % colorsProductes1.length],
+      title: Text(
+        servei.name,
+      ),
+      subtitle: Text(servei.valid.formatted() + "\nConsumit $consumed de $payed" ),
+      onTap: () {},
+    );
+
+
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,18 +97,14 @@ class _ServeiListWidgetState extends State<ServeiListWidget> {
           return SafeArea(
             minimum: EdgeInsets.only(
                 left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
-            child: ListView.builder(
+            child: ListView.separated(
               itemCount: d.countServeis(),
               itemBuilder: (BuildContext context, int index) {
-                return ListTile(
-                  tileColor : [Colors.black12, Colors.white][index % 2],
-                  title: Text(
-                    d.allServeis()[index].name,
-                  ),
-                  subtitle: Text(d.allServeis()[index].valid.formatted() + "  " + d.allServeis()[index].idProducte.toString() ),
-                  onTap: () {},
-                );
+                return buildTile(d.allServeis()[index], index);
               },
+              separatorBuilder: (BuildContext context, int index) {
+                   return Divider(color: Colors.grey,);
+          },
             ),
           );
         }),

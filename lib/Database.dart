@@ -18,6 +18,8 @@ import 'package:intl/intl.dart';
 import "SlideRoutes.dart";
 import 'BacklogListWidget.dart';
 
+
+bool debugging = true;
 Future showBacklog(BuildContext cnt) async {
   await Navigator.push(cnt, SlideLeftRoute(widget: BacklogListWidget()));
 }
@@ -123,7 +125,7 @@ class Database {
   Participant? currentParticipant;
   List<Contractacio> currentContractacions = [];
 
-  Server server = Server("192.168.1.19:8888", "simposi23.php");
+  Server server = Server("192.168.1.18:8888", "simposi23.php");
 
   String lastServerError = "";
 
@@ -148,6 +150,8 @@ class Database {
     _tables['Modalitats'] =
         t.Table<Modalitat>('Modalitats', Map<int, Modalitat>());
 
+
+
     await loadData();
     await loadDataFromServer(true);
   }
@@ -171,9 +175,6 @@ class Database {
   }
 
   void notifySubscriptors(String status, String message, String op) {
-    if (status != "OK") {
-      print("Notifying subscriptors");
-    }
     for (var object in subscriptors) {
       object.modelUpdated(status, message, op);
     }
@@ -255,7 +256,7 @@ class Database {
     if (_processingBacklog) {
       return;
     }
-    print("Processing Backlog");
+
     _processingBacklog = true;
 
     int i = _backlog.length;
@@ -263,7 +264,7 @@ class Database {
     try {
       while (_backlog.length > 0 && i > 0) {
         Operacio op = _backlog[0];
-        print("BACKLOG : processant ${op.op}(${op.idValue()})");
+
 
         switch (op.op) {
           case TipusOperacions.productes:
@@ -397,7 +398,7 @@ class Database {
       if (data.length >= 2) {
         var row = data[1];
         if (row.isNotEmpty) {
-          print("Updating $row");
+
           Participant p = Participant.fromCSV(row);
           _tables['Participants']!.addAll([p] as List<Participant>);
 
@@ -547,7 +548,6 @@ class Database {
           addToBacklog(Operacio(TipusOperacions.modalitats, -1));
           lastServerError = e.toString();
         }
-
       }
 
     try {
@@ -603,8 +603,7 @@ class Database {
     } on http.ClientException catch (e) {
       lastServerError = e.toString();
       notifySubscriptors("OK", lastServerError, "");
-      print("Error en connexio " + e.runtimeType.toString());
-    }
+     }
   }
 
   Future registrarParticipant(int id) async {
@@ -643,7 +642,6 @@ class Database {
 
   Future consumir(int id) async {
     // Some checks so things are fast although the conexion is not available:
-    print("going to server per consumit $id");
     int idParticipant = (id / 100).floor();
     int idServei = id % 100;
 
@@ -757,15 +755,10 @@ class Database {
       await server.getData(
           stringOperacio[TipusOperacions.compres]!, "", _updateCompres);
     }catch (e) {
-      // Procés local i afegir a backlog
 
-      print("Local  processing");
       // Aqui fem el process local en cas que no hagi sigut possible parlar amb el servidor
 
-      // Actualitzem en local!!!
-
       if (!participant.registrat) {
-        print("No Registrat");
         notifySubscriptors(
             "ERRORR", " $nom encara NO està registrat ", "comprar");
         return;
@@ -800,6 +793,9 @@ class Database {
       addToBacklog(Operacio(TipusOperacions.compres, -1));
     }
   }
+
+
+  //CSV Conversion
   // Genera un registre de participants a partir de Participant + Contratacions
 
   String paticipantCSV(Participant p) {
@@ -844,27 +840,34 @@ class Database {
     return s;
   }
 
+  // Saving a revocering data locally
+
+  Future<String> pathFor(String table) async{
+
+    var check = table.replaceAll("share", "");
+    if (_tables[check] == null){
+      throw Exception("Table $table not defined in database");
+    }
+    final String dir = (await getApplicationDocumentsDirectory()).path;
+    return "$dir/$table.csv";
+  }
+
   // Salva Serveis i Participants als fitxers Serveis.csv i Participants.csv
   Future saveData() async {
-    final String dir = (await getApplicationDocumentsDirectory()).path;
-    var path = dir + "/Serveis.csv";
-    var file = File(path);
+
+    var file = File(await pathFor("Serveis"));
     await file.writeAsString(serveisToCSV(allServeis()), flush: true);
 
-    path = dir + "/Productes.csv";
-    file = File(path);
+    file = File(await pathFor("Productes"));
     await file.writeAsString(productesToCSV(allProductes()), flush: true);
 
-    path = dir + "/Participants.csv";
-    file = File(path);
+    file = File(await pathFor("Participants"));
     await file.writeAsString(participantsToCSV(allParticipants()), flush: true);
 
-    path = dir + "/Compres.csv";
-    file = File(path);
+    file = File(await pathFor("Compres"));
     await file.writeAsString(compresToCSV(allCompres()), flush: true);
 
-    path = dir + "/Modalitats.csv";
-    file = File(path);
+    file = File(await pathFor("Modalitats"));
     await file.writeAsString(modalitatsToCSV(allModalitats()), flush: true);
   }
 
@@ -944,6 +947,79 @@ class Database {
       }
     } catch (e) {}
   }
+
+  // Share data. Fa el join per exportar dades inteligibles per tothom
+
+  String shareCompresData() {
+
+    var compres = allCompres();
+    compres.sort(
+            (Compra a, Compra b){
+          return a.data.compareTo(b.data);
+        }
+    );
+
+    var titles = "id;Data;id Participant;id Producte;Terminal;Nom Participant;Nom Prodcte;Preu";
+    return titles + "\n" + compres.map((compra) {
+
+      Participant? participant = findParticipant(compra.idParticipant);
+      Producte? producte = findProducte(compra.idProducte);
+
+      String output = compra.toCSV();
+      if(participant != null){
+        output = output + ";" + participant.name;
+      }else {
+        output = output + ";";
+      }
+
+      if(producte != null){
+        output = output + ";" + producte.name + ";" + producte.preu.toString();
+      }else {
+        output = output + ";;0.0";
+      }
+      return output;
+    }).join("\n");
+
+
+  }
+
+
+  String paticipantCSVShare(Participant p) {
+    List<Contractacio> contractacions = p.contractacions();
+
+    String s = p.toCSV();
+    contractacions.sort((a, b) => a.id.compareTo(b.id));
+
+    for (Contractacio c in contractacions) {
+      s = "$s;" + c.estat.toString();
+    }
+
+    return s;
+  }
+  String shareParticipantsData(){
+    var titles = "id;Nom;Modalitat;Registrat;";
+
+    var serveis = allServeis();
+    serveis.sort(
+        (a, b) => a.id.compareTo(b.id)
+    );
+
+    titles += (serveis.map((e) => e.name ).join(";")) + ";Modalitat";
+    var participants = allParticipants();
+
+    return titles + "\n" +  participants.map((participant) {
+      var output = paticipantCSVShare(participant);
+      var modalitat = findModalitat(participant.modalitat);
+      if(modalitat != null) {
+        output += ";${modalitat.name}";
+      }else{
+        output += ";";
+      }
+      return output;
+    }).join("\n");
+
+  }
+
 
   // Funcions específiques
 

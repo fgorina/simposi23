@@ -52,12 +52,9 @@ class Server {
 
       var response = await http.get(uri);
       var decoded = utf8.decode(response.bodyBytes);
-      print(decoded);
 
       var lines = decoded.split("\n");
       var hisHash = lines[0];
-
-      print(lines);
 
       if(hisHash == "IR"){
         throw(HashException());

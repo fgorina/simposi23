@@ -38,7 +38,6 @@ class _RespostaWidgetState extends State<RespostaWidget> {
     super.initState();
     d.addSubscriptor(this);
     int id = widget.participant.id * 100 + widget.servei.id;
-    print("Consumint $id");
     d.consumir(id);
   }
 
