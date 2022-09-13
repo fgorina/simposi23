@@ -1,16 +1,10 @@
-# simposi23
+# Simposi23
 
-A new Flutter project.
+Simposi Pagaia 2023
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+Aplicació per la gestió d'assistència al Simposi Pagaia 2023.
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- La aplicació associada de .php / bmysql es troba a Doc (simposi23.php)
+- La estructura de la base de dades mysql i valors de configuració es troba a Doc (database.mysql)

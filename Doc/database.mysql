@@ -1,0 +1,88 @@
+create table wpdj_pagaia_qr_sympo2023_modalitats(
+id  int primary key,
+descripcio text
+)
+;
+insert into wpdj_pagaia_qr_sympo2023_modalitats (id, descripcio) values (0, 'Colaborador');
+insert into wpdj_pagaia_qr_sympo2023_modalitats (id, descripcio) values (1, 'Coach-Ponent-Monitor');
+insert into wpdj_pagaia_qr_sympo2023_modalitats (id, descripcio) values (2, 'Participant Soci');
+insert into wpdj_pagaia_qr_sympo2023_modalitats (id, descripcio) values (3, 'Participant No Soci');
+insert into wpdj_pagaia_qr_sympo2023_modalitats (id, descripcio) values (4, 'Acompanyant Participant Soci');
+insert into wpdj_pagaia_qr_sympo2023_modalitats (id, descripcio) values (5, 'Acompanyant Participant No Soci');
+insert into wpdj_pagaia_qr_sympo2023_modalitats (id, descripcio) values (6, 'Acompanyant Ponent');
+
+create table wpdj_pagaia_qr_sympo2023_estats (
+id int primary key,
+descripcio text
+);
+
+insert into wpdj_pagaia_qr_sympo2023_estats (id, descripcio) values (0, 'No Pagat') ;
+insert into wpdj_pagaia_qr_sympo2023_estats (id, descripcio) values (1, 'Pagat') ;
+insert into wpdj_pagaia_qr_sympo2023_estats (id, descripcio) values (2, 'Utilitzat') ;
+
+
+create table wpdj_pagaia_qr_sympo2023 (
+id int primary key,
+nom text,
+modalitat int references  wpdj_pagaia_qr_sympo2023_modalitats(id),
+m_arribat int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_esm_d1 int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_esm_d2 int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_esm_d3 int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_esm_d4 int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_esm_d5 int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_esm_d6 int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_esm_d7 int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_pic_d1 int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_pic_d2 int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_pic_d3 int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_sopar_sympo int references  wpdj_pagaia_qr_sympo2023_estats(id),
+m_sopar_sp  int references  wpdj_pagaia_qr_sympo2023_estats(id),
+data_modificat date
+);
+
+
+create_table wpdj_pagaia_qr_sympo2023_productes(
+id int primary key,
+descripcio text,
+preu decimal(12,2)
+);
+
+insert into wpdj_pagaia_qr_sympo2023_productes values (1, 'Esmorzars Simposi', 20.00);                                |
+insert into wpdj_pagaia_qr_sympo2023_productes values (2, 'Esmorzars Setmana', 25.00);                                |
+insert into wpdj_pagaia_qr_sympo2023_productes values (3, 'Picnic dia 31/03/23', 10.00);                              |
+insert into wpdj_pagaia_qr_sympo2023_productes values (4, 'Picnic dia 01/04/23', 10.00);                              |
+insert into wpdj_pagaia_qr_sympo2023_productes values (5, 'Picnic dia 02/04/23', 10.00);
+
+
+
+create table wpdj_pagaia_qr_sympo2023_serveis(
+id int primary key,
+descripcio text,
+data_inici datetime,
+data_fi datetime,
+field text,
+id_producte int references wpdj_pagaia_qr_sympo2023_productes(id)
+);
+
+insert into wpdj_pagaia_qr_sympo2023_serveis values(1, 'Esmorzar dia 31/03/23', '2023-03-31 05:00:00',  '2023-03-31 11:00:00', 'm_esm_d1', 1);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(2, 'Esmorzar dia 01/04/23', '2023-04-01 05:00:00',  '2023-04-01 11:00:00', 'm_esm_d2', 1);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(3, 'Esmorzar dia 02/04/23', '2023-04-02 05:00:00',  '2023-04-02 11:00:00', 'm_esm_d3', 1);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(4, 'Esmorzar dia 03/04/23', '2023-04-03 05:00:00',  '2023-04-03 11:00:00', 'm_esm_d4', 2);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(5, 'Esmorzar dia 04/04/23', '2023-04-04 05:00:00',  '2023-04-04 11:00:00', 'm_esm_d5', 2);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(6, 'Esmorzar dia 05/04/23', '2023-04-05 05:00:00',  '2023-04-05 11:00:00', 'm_esm_d6', 2);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(7, 'Esmorzar dia 06/04/23', '2023-04-06 05:00:00',  '2023-04-06 11:00:00', 'm_esm_d7', 2);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(8, 'Picnic dia 31/03/23', '2023-03-31 05:00:00',  '2023-03-31 11:00:00', 'm_pic_d1', 3);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(9, 'Picnic dia 01/04/23', '2023-04-01 05:00:00',  '2023-04-01 11:00:00', 'm_pic_d2', 4);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(10, 'Picnic dia 02/04/23', '2023-04-02 05:00:00',  '2023-04-02 11:00:00', 'm_pic_d3', 5);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(11, 'Sopar Simposi', '2023-04-02 20:00:00',  '2023-04-02 23:59:00', 'm_sopar_sympo', 0);
+insert into wpdj_pagaia_qr_sympo2023_serveis values(12, 'Sopar Setmana de Paleig' , '2023-04-06 20:00:00',  '2023-04-06 23:59:00', 'm_sopar_sp', 0);
+
+
+create table wpdj_pagaia_qr_sympo2023_compres(
+    id int primary key,
+    data DateTime,
+    id_participant int not null references wpdj_pagaia_qr_sympo2023(id),
+    id_producte int not null references wpdj_pagaia_qr_sympo2023_productes(id),
+    terminal int 
+);

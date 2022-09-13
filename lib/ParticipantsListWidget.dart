@@ -114,6 +114,8 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
 
     Widget resposta;
 
+
+
     resposta = RespostaWidget( participant, servei, "WAITING", "Waiting");
     await Navigator.push(context, SlideLeftRoute(widget:resposta));
     if (scanner){

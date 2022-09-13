@@ -41,7 +41,11 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
     }
 
     if (_isTopOfNavigationStack) {
-      setState(() {});
+      setState(() {
+        print("Updating");
+        d.currentParticipant = d.findParticipant(d.currentParticipant!.id);
+        d.currentContractacions = d.currentParticipant!.contractacions();
+      });
     }
   }
 
@@ -118,6 +122,8 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
     String modalitatName =
         modalitat?.name ?? d.currentParticipant!.modalitat.toString();
 
+    ScrollController controller = ScrollController();
+
     return KeyboardSizeProvider(
       smallSize: 500.0,
       child: Scaffold(
@@ -163,11 +169,12 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
                  */
                 Text(""),
                 Container(
-                  height: screenHeight(context) - 250,
+                  height: screenHeight(context) - 280,
                   child: Scrollbar(
                     thumbVisibility: true,
-                    controller: ScrollController(),
+                    controller: controller,
                     child: ListView.builder(
+                      controller: controller,
                         itemCount: d.currentContractacions.length,
                         itemBuilder: (BuildContext context, int index) {
                           return ListTile(

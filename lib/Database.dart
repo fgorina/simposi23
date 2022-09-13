@@ -10,6 +10,7 @@ import 'Contractacio.dart';
 import 'Producte.dart';
 import 'Compra.dart';
 import 'Server.dart';
+import 'package:http/http.dart' as http;
 import 'Modalitat.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:path_provider/path_provider.dart';
@@ -61,24 +62,24 @@ class Operacio {
 
   Operacio(this.op, this._id);
 
-  String idValue(){
-    if (_id == -1){
+  String idValue() {
+    if (_id == -1) {
       return "";
-    }else {
+    } else {
       return _id.toString();
     }
   }
 
-  int id(){
-    if (_id == -1){
+  int id() {
+    if (_id == -1) {
       return -1;
-    }else {
+    } else {
       return _id;
     }
   }
 
   bool isEqual(Operacio r) {
-    return op == r.op && id == r.id;
+    return op == r.op && _id == r._id;
   }
 
   String toCSV() {
@@ -144,7 +145,8 @@ class Database {
         t.Table<Contractacio>('Contractacions', Map<int, Contractacio>());
     _tables['Productes'] = t.Table<Producte>('Productes', Map<int, Producte>());
     _tables['Compres'] = t.Table<Compra>('Compres', Map<int, Compra>());
-    _tables['Modalitats'] = t.Table<Modalitat>('Modalitats', Map<int, Modalitat>());
+    _tables['Modalitats'] =
+        t.Table<Modalitat>('Modalitats', Map<int, Modalitat>());
 
     await loadData();
     await loadDataFromServer(true);
@@ -253,6 +255,7 @@ class Database {
     if (_processingBacklog) {
       return;
     }
+    print("Processing Backlog");
     _processingBacklog = true;
 
     int i = _backlog.length;
@@ -260,47 +263,47 @@ class Database {
     try {
       while (_backlog.length > 0 && i > 0) {
         Operacio op = _backlog[0];
-        print("BACKLOG : processant ${op.op}(${op.id})");
+        print("BACKLOG : processant ${op.op}(${op.idValue()})");
 
         switch (op.op) {
           case TipusOperacions.productes:
             await server.getData(stringOperacio[TipusOperacions.productes]!,
-                op.idValue(), _updateProductes);
+                op.idValue(), (List<String> response){ _updateProductes(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.serveis:
             await server.getData(stringOperacio[TipusOperacions.serveis]!,
-                op.idValue(), _updateServeis);
+                op.idValue(),  (List<String> response){_updateServeis(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.participants:
-            await server.getData(stringOperacio[TipusOperacions.serveis]!,
-                op.idValue(), _updateParticipants);
+            await server.getData(stringOperacio[TipusOperacions.participants]!,
+                op.idValue(),  (List<String> response){_updateParticipants(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.registrar:
             await server.getData(stringOperacio[TipusOperacions.registrar]!,
-                op.idValue(), _updateParticipants);
+                op.idValue(),  (List<String> response){_updateParticipants(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.consumir:
             await server.getData(stringOperacio[TipusOperacions.consumir]!,
-                op.idValue(), _updateContractacio);
+                op.idValue(),  (List<String> response){_updateContractacio(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.comprar:
             await server.getData(stringOperacio[TipusOperacions.comprar]!,
-                op.idValue(), _updateContractacio);
+                op.idValue(),  (List<String> response){_updateContractacio(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.compres:
             await server.getData(stringOperacio[TipusOperacions.compres]!,
-                op.idValue(), _updateCompres);
+                op.idValue(), (List<String> response){ _updateCompres(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.modalitats:
             await server.getData(stringOperacio[TipusOperacions.modalitats]!,
-                op.idValue(), _updateModalitats);
+                op.idValue(), (List<String> response){ _updateModalitats(response, clear: op.idValue().isEmpty);});
             break;
 
           default:
@@ -311,22 +314,31 @@ class Database {
         lastServerError = "";
         notifySubscriptors("OK", lastServerError, "");
       }
-    } catch (e) {
+    } catch (e, stacktrace) {
+      print("Error in Backlog\n" + e.toString() + "\n" + stacktrace.toString());
       lastServerError = e.toString();
       notifySubscriptors("OK", lastServerError, "");
     }
+
     saveBacklog();
+    notifySubscriptors("OK", lastServerError, "");
     _processingBacklog = false;
   }
 
   // Server connection
 
-  Future _updateParticipants(List<String> response, {autosave: true}) async {
+  Future _updateParticipants(List<String> response, {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
+      if(clear) {
+        _tables['Participants']!.clear();
+        _tables['Contractacions']!.clear();
+
+      }
+
       for (var row in data) {
         if (row.isNotEmpty) {
           Participant p = Participant.fromCSV(row);
@@ -348,12 +360,18 @@ class Database {
     notifySubscriptors(status, data[0], op);
   }
 
-  Future _updateContractacio(List<String> response, {autosave: true}) async {
+  Future _updateContractacio(List<String> response, {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
+      if(clear) {
+        _tables['Participants']!.clear();
+        _tables['Contractacions']!.clear();
+
+      }
+
       var row = data[0];
       if (row.isNotEmpty) {
         Participant p = Participant.fromCSV(row);
@@ -370,33 +388,47 @@ class Database {
         saveData();
       }
     } else {
-      var row = data[1];
-      if (row.isNotEmpty) {
-        print("Updating $row");
-        Participant p = Participant.fromCSV(row);
-        _tables['Participants']!.addAll([p] as List<Participant>);
+      if(clear) {
+        _tables['Participants']!.clear();
+        _tables['Contractacions']!.clear();
 
-        // Now update contractacions
-        List<Contractacio> contractacions =
-            Contractacio.fromCSV(row, _tables['Serveis'] as t.Table<Servei>);
-        _tables['Contractacions']!.addAll(contractacions as List<Contractacio>);
-
-        currentParticipant = p;
-        currentContractacions = contractacions;
       }
-      if (autosave) {
-        saveData();
+
+      if (data.length >= 2) {
+        var row = data[1];
+        if (row.isNotEmpty) {
+          print("Updating $row");
+          Participant p = Participant.fromCSV(row);
+          _tables['Participants']!.addAll([p] as List<Participant>);
+
+          // Now update contractacions
+          List<Contractacio> contractacions =
+              Contractacio.fromCSV(row, _tables['Serveis'] as t.Table<Servei>);
+          _tables['Contractacions']!
+              .addAll(contractacions);
+
+          currentParticipant = p;
+          currentContractacions = contractacions;
+        }
+        if (autosave) {
+          saveData();
+        }
       }
     }
     notifySubscriptors(status, data[0], op);
   }
 
-  Future _updateServeis(List<String> response, {autosave: true}) async {
+  Future _updateServeis(List<String> response, {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
+
+      if(clear) {
+        _tables['Serveis']!.clear();
+      }
+
       for (var row in data) {
         if (row.isNotEmpty) {
           Servei p = Servei.fromCSV(row);
@@ -410,12 +442,17 @@ class Database {
     notifySubscriptors(status, data[0], op);
   }
 
-  Future _updateProductes(List<String> response, {autosave: true}) async {
+  Future _updateProductes(List<String> response, {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
+
+      if(clear) {
+        _tables['Productes']!.clear();
+      }
+
       for (var row in data) {
         if (row.isNotEmpty) {
           Producte p = Producte.fromCSV(row);
@@ -429,12 +466,17 @@ class Database {
     notifySubscriptors(status, data[0], op);
   }
 
-  Future _updateCompres(List<String> response, {autosave: true}) async {
+  Future _updateCompres(List<String> response, {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
+
+      if(clear) {
+        _tables['Compres']!.clear();
+      }
+
       for (var row in data) {
         if (row.isNotEmpty) {
           Compra compra = Compra.fromCSV(row);
@@ -444,19 +486,22 @@ class Database {
         }
       }
       if (autosave) {
-        print("Saving compres");
         saveData();
       }
     }
     notifySubscriptors(status, data[0], op);
   }
 
-  Future _updateModalitats(List<String> response, {autosave: true}) async {
+  Future _updateModalitats(List<String> response, {autosave: true, clear: false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
+      if(clear) {
+        _tables['Modalitats']!.clear();
+      }
+
       for (var row in data) {
         if (row.isNotEmpty) {
           Modalitat modalitat = Modalitat.fromCSV(row);
@@ -472,59 +517,81 @@ class Database {
   }
 
   Future loadDataFromServer(bool includeServeis) async {
+    bool failed = false;
+
     if (includeServeis) {
       try {
         await server.getData(
-            stringOperacio[TipusOperacions.productes]!, "", _updateProductes);
+            stringOperacio[TipusOperacions.productes]!, "", (List<String> response) {_updateProductes(response, clear: true);});
         lastServerError = "";
-      } catch (e) {
+      }  on http.ClientException catch (e) {
+        failed = true;
         addToBacklog(Operacio(TipusOperacions.productes, -1));
         lastServerError = e.toString();
       }
       try {
         await server.getData(
-            stringOperacio[TipusOperacions.serveis]!, "", _updateServeis);
+            stringOperacio[TipusOperacions.serveis]!, "", (List<String> response) { _updateServeis(response, clear: true);});
         lastServerError = "";
-      } catch (e) {
+      } on http.ClientException catch (e) {
+        failed = true;
         addToBacklog(Operacio(TipusOperacions.serveis, -1));
         lastServerError = e.toString();
       }
-    }
-    try {
-      await server.getData(
-          stringOperacio[TipusOperacions.modalitats]!, "", _updateModalitats);
-      lastServerError = "";
-    } catch (e) {
-      addToBacklog(Operacio(TipusOperacions.modalitats, -1));
-      lastServerError = e.toString();
-    }
+        try {
+          await server.getData(
+              stringOperacio[TipusOperacions.modalitats]!, "", (List<String> response) { _updateModalitats(response, clear: true);});
+          lastServerError = "";
+        }on http.ClientException  catch (e) {
+          failed = true;
+          addToBacklog(Operacio(TipusOperacions.modalitats, -1));
+          lastServerError = e.toString();
+        }
+
+      }
 
     try {
-      await server.getData(stringOperacio[TipusOperacions.participants]!, "",
-          _updateParticipants);
+       await server.getData(stringOperacio[TipusOperacions.participants]!, "",
+               (List<String> response) {_updateParticipants(response, clear: true);});
       lastServerError = "";
       _procesaBacklog();
-    } catch (e) {
+    } on http.ClientException catch (e) {
+      failed = true;
       addToBacklog(Operacio(TipusOperacions.participants, -1));
       lastServerError = e.toString();
     }
 
-    await loadCompres();
+    if (failed) {
+      //loadData();
+    }
 
+    await loadCompres();
 
     notifySubscriptors("OK", lastServerError, "");
   }
 
-  Future loadCompres() async{
+  Future<bool> loadCompres() async {
+    bool failed = false;
     try {
-      await server.getData(
-          stringOperacio[TipusOperacions.compres]!, "", _updateCompres);
+       await server.getData(
+          stringOperacio[TipusOperacions.compres]!, "", (List<String> response) {_updateCompres(response, clear:true);});
       lastServerError = "";
-    } catch (e) {
+    } on http.ClientException catch (e) {
+      failed = true;
       addToBacklog(Operacio(TipusOperacions.compres, -1));
       lastServerError = e.toString();
+      try {
+        var dir = (await getApplicationDocumentsDirectory()).path;
+        var path = dir + "/Compres.csv";
+        var file = File(path);
+        var compresData = await file.readAsString();
+        await _updateCompres(compresData.split("\n"), autosave: false, clear: true);
+      } catch (e) {
+        print("Error loading Compres.csv ${e.toString()}");
+      }
     }
     notifySubscriptors("OK", lastServerError, "");
+    return failed;
   }
 
   Future updateParticipant(int id) async {
@@ -533,7 +600,7 @@ class Database {
           id.toString(), _updateParticipants);
       lastServerError = "";
       _procesaBacklog();
-    } catch (e) {
+    } on http.ClientException catch (e) {
       lastServerError = e.toString();
       notifySubscriptors("OK", lastServerError, "");
       print("Error en connexio " + e.runtimeType.toString());
@@ -541,29 +608,33 @@ class Database {
   }
 
   Future registrarParticipant(int id) async {
-    try {
-      Participant? participant = findParticipant(id);
-      if (participant == null) {
-        notifySubscriptors("ERROR",
-            "El participant amb id $id no hi es a la base de dades.", "");
-        return;
-      }
 
-      if (participant.registrat) {
-        notifySubscriptors(
-            "ERROR", "{$participant.name} ja està registrat!", "");
-        await server.getData(stringOperacio[TipusOperacions.registrar]!,
-            id.toString(), _updateParticipants);
-        return;
-      }
-      participant.registrat = true;
-      saveData();
-      notifySubscriptors("OK", "", "");
+    Participant? participant = findParticipant(id);
+    if (participant == null) {
+      notifySubscriptors("ERROR",
+          "El participant amb id $id no hi es a la base de dades.", "registrar");
+      return;
+    }
+
+    try {
 
       await server.getData(stringOperacio[TipusOperacions.registrar]!,
           id.toString(), _updateParticipants);
       _procesaBacklog();
-    } catch (e) {
+
+    } on http.ClientException catch (e) {   // Proces Local
+
+      if (participant.registrat) {
+        notifySubscriptors(
+            "ERROR", "{$participant.name} ja està registrat!", "registrar");
+
+        return;
+      }
+      participant.registrat = true;
+      saveData();
+      notifySubscriptors("OK", "", "registrar");
+
+
       lastServerError = e.toString();
       notifySubscriptors("OK", lastServerError, "");
       addToBacklog(Operacio(TipusOperacions.registrar, id));
@@ -571,79 +642,72 @@ class Database {
   }
 
   Future consumir(int id) async {
+    // Some checks so things are fast although the conexion is not available:
+    print("going to server per consumit $id");
+    int idParticipant = (id / 100).floor();
+    int idServei = id % 100;
+
+    Servei? servei = findServei(idServei);
+    Participant? participant = findParticipant(idParticipant);
+
+    if (participant == null) {
+      notifySubscriptors(
+          "ERROR",
+          "El participant amb id $idParticipant no hi es a la base de dades.",
+          "consumir");
+      return;
+    }
+
+    String nom = participant.name;
+
+    if (servei == null) {
+      notifySubscriptors(
+          "ERROR",
+          "El servei amb id $idServei no hi es a la base de dades.",
+          "consumir");
+      return;
+    }
+
+    String nomServei = servei.name;
+
+    Contractacio? contractacio = findContractacio(id);
+
+    if (contractacio == null) {
+      notifySubscriptors(
+          "ERROR", "No hi ha registre de $nomServei per a $nom", "consumir");
+      return;
+    }
+
     try {
-      // Some checks so things are fast although the conexion is not available:
-      print("going to server per consumit $id");
-      int idParticipant = (id / 100).floor();
-      int idServei = id % 100;
+      await server.getData("consumir", id.toString(), _updateContractacio);
+      lastServerError = "";
+      _procesaBacklog();
+    }   on http.ClientException catch (e) {   //Procés local si la conexió no es correcta
 
-      Servei? servei = findServei(idServei);
-      Participant? participant = findParticipant(idParticipant);
-
-      if (participant == null) {
+      if (!participant.registrat) {
         notifySubscriptors(
-            "ERROR",
-            "El participant amb id $idParticipant no hi es a la base de dades.",
-            "consumir");
-        return;
-      }
-
-      String nom = participant.name;
-
-      if (servei == null) {
-        notifySubscriptors(
-            "ERROR",
-            "El servei amb id $idServei no hi es a la base de dades.",
-            "consumir");
-        return;
-      }
-
-      String nomServei = servei.name;
-
-      Contractacio? contractacio = findContractacio(id);
-
-      if (contractacio == null) {
-        notifySubscriptors(
-            "ERROR", "No hi ha registre de $nomServei per a $nom", "consumir");
+            "ERRORR", " $nom encara NO està registrat ", "consumir");
         return;
       }
 
       if (contractacio.estat == 0) {
         notifySubscriptors(
             "ERRORP", " $nom NO te pagat $nomServei ", "consumir");
-        await server.getData("consumir", id.toString(), _updateContractacio);
-        lastServerError = "";
-        _procesaBacklog();
         return;
       }
 
       if (contractacio.estat == 2) {
         notifySubscriptors(
             "ERROR", " $nom ja ha consumit $nomServei ", "consumir");
-        await server.getData("consumir", id.toString(), _updateContractacio);
-        lastServerError = "";
-        _procesaBacklog();
         return;
       }
 
-      if (!participant.registrat) {
-        notifySubscriptors(
-            "ERRORR", " $nom encara NO està registrat ", "consumir");
-        await server.getData("consumir", id.toString(), _updateContractacio);
-        lastServerError = "";
-        _procesaBacklog();
-        return;
-      }
 
       contractacio.estat = 2;
       saveData();
-      notifySubscriptors("OK", "", "consumir");
-      await server.getData(stringOperacio[TipusOperacions.consumir]!,
-          id.toString(), _updateContractacio);
-      lastServerError = "";
-      _procesaBacklog();
-    } catch (e) {
+
       lastServerError = e.toString();
+      notifySubscriptors("OK", "", "consumir");
       notifySubscriptors("OK", lastServerError, "");
       addToBacklog(Operacio(TipusOperacions.consumir, id),
           allowDuplicates: true);
@@ -678,44 +742,62 @@ class Database {
     }
 
     String nomProducte = producte.name;
+    var compra = findCompra(id);
 
-    if (!participant.registrat) {
-      notifySubscriptors(
-          "ERRORR", " $nom encara NO està registrat ", "consumir");
-      await server.getData("comprar", id.toString(), _updateContractacio);
-      lastServerError = "";
-      _procesaBacklog();
+    if (findCompra(id) != null) {
+      notifySubscriptors("ERROR",
+          "El producte $nomProducte ja ha estat comprat per $nom.", "comprar");
       return;
     }
-
-    // Actualitzem en local!!!
-
-    var serveis = searchServeisProducte(producte);
-
-    serveis.forEach((servei) {
-      int idContractacio = (idParticipant * 100) + servei.id;
-      Contractacio? contractacio = findContractacio(idContractacio);
-      if (contractacio != null) {
-        contractacio.estat = 1;
-      }
-    });
-
-    Compra cpr = Compra(id, "", DateTime.now(), idParticipant, idProducte, 1 );
-    cpr.name = nameForCompra(cpr);
-
-    _tables["Compres"]!.addAll([cpr] as List<Compra>);
-
-    saveData();
 
     try {
       await server.getData(stringOperacio[TipusOperacions.comprar]!,
           id.toString(), _updateContractacio);
-      lastServerError = "";
-      _procesaBacklog();
-    } catch (e) {
+
+      await server.getData(
+          stringOperacio[TipusOperacions.compres]!, "", _updateCompres);
+    }catch (e) {
+      // Procés local i afegir a backlog
+
+      print("Local  processing");
+      // Aqui fem el process local en cas que no hagi sigut possible parlar amb el servidor
+
+      // Actualitzem en local!!!
+
+      if (!participant.registrat) {
+        print("No Registrat");
+        notifySubscriptors(
+            "ERRORR", " $nom encara NO està registrat ", "comprar");
+        return;
+      }
+
+      var serveis = searchServeisProducte(producte);
+
+      serveis.forEach((servei) {
+        int idContractacio = (idParticipant * 100) + servei.id;
+        Contractacio? contractacio = findContractacio(idContractacio);
+        if (contractacio != null) {
+          if (contractacio.estat == 0) {
+            // Si ja esta consumit no es pot tornar a comprar (crec)
+            contractacio.estat = 1;
+          }
+        }
+      });
+
+      if (findCompra(id) == null) {
+        // Add to compres si no existia ja
+        Compra cpr =
+            Compra(id, "", DateTime.now(), idParticipant, idProducte, 1);
+        cpr.name = nameForCompra(cpr);
+
+        _tables["Compres"]!.addAll([cpr] as List<Compra>);
+      }
+
+      saveData();
       lastServerError = e.toString();
       notifySubscriptors("OK", lastServerError, "");
       addToBacklog(Operacio(TipusOperacions.comprar, id));
+      addToBacklog(Operacio(TipusOperacions.compres, -1));
     }
   }
   // Genera un registre de participants a partir de Participant + Contratacions
@@ -794,7 +876,7 @@ class Database {
       var path = dir + "/Productes.csv";
       var file = File(path);
       var productesData = await file.readAsString();
-      await _updateProductes(productesData.split("\n"), autosave: false);
+       await _updateProductes(productesData.split("\n"), autosave: false, clear: true);
     } catch (e) {
       print("Error loading Productes.csv ${e.toString()}");
     }
@@ -803,7 +885,7 @@ class Database {
       var path = dir + "/Serveis.csv";
       var file = File(path);
       var serveisData = await file.readAsString();
-      await _updateServeis(serveisData.split("\n"), autosave: false);
+      await _updateServeis(serveisData.split("\n"), autosave: false, clear: true);
     } catch (e) {
       print("Error loading Serveis.csv ${e.toString()}");
     }
@@ -811,7 +893,7 @@ class Database {
       var path = dir + "/Participants.csv";
       var file = File(path);
       var participantsData = await file.readAsString();
-      await _updateParticipants(participantsData.split("\n"), autosave: false);
+       await _updateParticipants(participantsData.split("\n"), autosave: false, clear: true);
     } catch (e) {
       print("Error loading Participants.csv ${e.toString()}");
     }
@@ -819,8 +901,7 @@ class Database {
       var path = dir + "/Compres.csv";
       var file = File(path);
       var compresData = await file.readAsString();
-
-      await _updateCompres(compresData.split("\n"), autosave: false);
+      await _updateCompres(compresData.split("\n"), autosave: false, clear: true);
     } catch (e) {
       print("Error loading Compres.csv ${e.toString()}");
     }
@@ -829,7 +910,7 @@ class Database {
       var path = dir + "/Modalitats.csv";
       var file = File(path);
       var modalitatsData = await file.readAsString();
-      await _updateModalitats(modalitatsData.split("\n"), autosave: false);
+      await _updateModalitats(modalitatsData.split("\n"), autosave: false, clear: true);
     } catch (e) {
       print("Error loading Modalitats.csv ${e.toString()}");
     }
@@ -855,8 +936,9 @@ class Database {
       var dir = (await getApplicationDocumentsDirectory()).path;
       var path = dir + "/Backlog.csv";
       var file = File(path);
-      var backlogData = (await file.readAsString()).split("\n");
 
+      var backlogData = (await file.readAsString()).split("\n");
+      _backlog.clear();
       for (var lin in backlogData) {
         _backlog.add(Operacio.fromCSV(lin));
       }
@@ -1027,6 +1109,7 @@ class Database {
   int countServeis() {
     return _tables['Serveis']!.count();
   }
+
   int countCompres() {
     return _tables['Compres']!.count();
   }

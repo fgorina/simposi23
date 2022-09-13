@@ -23,9 +23,18 @@ class _CompresListWidgetState extends State<CompresListWidget> {
 
   Database d = Database.shared;
 
+  List<Compra> compres = [];
+
   void initState() {
     super.initState();
     d.addSubscriptor(this);
+    compres = d.allCompres();
+    compres.sort(
+        (Compra a, Compra b){
+          return a.data.compareTo(b.data);
+        }
+    );
+
     d.loadCompres();
 
   }
@@ -39,9 +48,19 @@ class _CompresListWidgetState extends State<CompresListWidget> {
     final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
     if (status != "OK" && _isTopOfNavigationStack) {
-      Database.displayAlert(context, "Error in List", message);
+      Database.displayAlert(context, "Error in Compres List", message);
     }
-    if (_isTopOfNavigationStack) {}
+    if (_isTopOfNavigationStack) {
+      setState(() {
+        compres = d.allCompres();
+        compres.sort(
+                (Compra a, Compra b){
+              return a.data.compareTo(b.data)*-1;
+            }
+        );
+
+      });
+    }
   }
 
   void showError() {
@@ -135,9 +154,9 @@ class _CompresListWidgetState extends State<CompresListWidget> {
                   thumbVisibility: true,
                   controller: controller,
                   child: ListView.builder(
-                    itemCount: d.countCompres(),
+                    itemCount: compres.length,
                     itemBuilder: (BuildContext context, int index) {
-                      return compraWidget(d.allCompres()[index], index);
+                      return compraWidget(compres[index], index);
                     },
                     controller: controller,
                     shrinkWrap: true,

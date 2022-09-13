@@ -262,9 +262,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
           ),
         );
     };
-
+    widgetList.add(Text(" "));
     widgetList.add(Divider(color: Colors.black));
-
+    widgetList.add(Text(" "));
     widgetList.add(ElevatedButton(onPressed: gotoParticipants,
         child: Text("Participants", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         style: ElevatedButton.styleFrom(
@@ -276,7 +276,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
     )
     );
 
-
+    widgetList.add(Text(" "));
 
     widgetList.add(
       ElevatedButton(onPressed: (){
@@ -290,7 +290,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver{
                   borderRadius: BorderRadius.circular(18.0),
                   side: BorderSide(color: Colors.black)))),
     );
-
+    widgetList.add(Text(" "));
     widgetList.add(
       ElevatedButton(onPressed: (){
         gotoServeisList();

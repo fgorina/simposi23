@@ -52,9 +52,12 @@ class Server {
 
       var response = await http.get(uri);
       var decoded = utf8.decode(response.bodyBytes);
+      print(decoded);
 
       var lines = decoded.split("\n");
       var hisHash = lines[0];
+
+      print(lines);
 
       if(hisHash == "IR"){
         throw(HashException());
@@ -68,6 +71,7 @@ class Server {
       if (hisHash == hash){
         return rest.sublist(1);
       } else {
+        print("His Hash $hisHash\nMy Hash $hash");
         throw(HashException());
       }
 

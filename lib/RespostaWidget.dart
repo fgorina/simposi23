@@ -40,7 +40,6 @@ class _RespostaWidgetState extends State<RespostaWidget> {
     int id = widget.participant.id * 100 + widget.servei.id;
     print("Consumint $id");
     d.consumir(id);
-
   }
 
   void dispose() {
@@ -91,7 +90,7 @@ class _RespostaWidgetState extends State<RespostaWidget> {
 
     // Error NO registrat. Oferir l'opció de registrar ara!!!
 
-    if (widget.status == "ERRORR" && widget.servei.idProducte != 0){
+    if (widget.status == "ERRORR"){
       return ElevatedButton(onPressed: (){
         registrar(widget.participant);
       },

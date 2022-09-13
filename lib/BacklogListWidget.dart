@@ -33,7 +33,7 @@ class _BacklogListWidgetState extends State<BacklogListWidget> {
     final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
     if (status != "OK" && _isTopOfNavigationStack) {
-      Database.displayAlert(context, "Error in List", message);
+      //Database.displayAlert(context, "Error in List", message);
     }
     if (_isTopOfNavigationStack) {
       setState(() {
@@ -76,11 +76,10 @@ class _BacklogListWidgetState extends State<BacklogListWidget> {
           String what =  d.findProducte(ids)?.name ?? "";
 
           return "$what per $who";
-
           break;
 
         default:
-          return op.id.toString();
+          return op.idValue();
           break;
 
       }
@@ -122,7 +121,7 @@ class _BacklogListWidgetState extends State<BacklogListWidget> {
                 return ListTile(
                   tileColor : [Colors.black12, Colors.white][index % 2],
                   title: Text(
-                    d.allBacklog()[index].op.toString() + "(" +d.allBacklog()[index].id.toString() + ")" ,
+                    d.allBacklog()[index].op.toString() + "(" + d.allBacklog()[index].idValue() + ")" ,
                   ),
                   subtitle: Text(
                       idToString(d.allBacklog()[index]),

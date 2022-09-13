@@ -17,7 +17,8 @@ class Table<T extends DatabaseRecord>{
   }
 
   List<T> all(){
-    return _data.values.toList();
+    return  _data.values.toList();
+
   }
 
   int count(){
@@ -56,7 +57,7 @@ class Table<T extends DatabaseRecord>{
   }
 
   void clear(){
-    _data = [] as Map<int, T>;
+    _data.clear();
   }
 
   void clean(){
