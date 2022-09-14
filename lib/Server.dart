@@ -15,18 +15,27 @@ import 'HashException.dart';
  *
  */
 
+enum Protocol{
+  http,
+  https
+}
 class Server {
 
-  String host = "http://192.168.1.25:8888";
-  String url;
+  Protocol protocol = Protocol.http;
+  String host = "";
+  String url = "";
 
 
   String secret = "asdjadskfjdaslkfj";
   String alg = "md5";
 
-  Server(this.host, this.url);
+  Server(this.protocol, this.host, this.url);
 
-
+  void setAddress(Protocol protocol, String host, String path){
+    this.protocol = protocol;
+    this.host = host;
+    this.url = path;
+  }
   Future<List<String>> doQuery(Map<String, String> parameters) async{
 
     var data  = parameters;
@@ -46,11 +55,17 @@ class Server {
     data["hash"] = hash;
 
     var uri = Uri.http(host, url, parameters);
+    if(protocol == Protocol.https){
+      uri = Uri.https(host, url, parameters);
+    }
 
     print(uri.toString());
 
-
       var response = await http.get(uri);
+      var headers = response.headers;
+      headers.forEach((key, value) {
+        print("Header |$key| : |$value|");
+      });
       var decoded = utf8.decode(response.bodyBytes);
 
       var lines = decoded.split("\n");

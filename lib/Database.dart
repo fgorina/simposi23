@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:simposi23/BacklogListWidget.dart';
 import 'dart:io';
@@ -17,7 +18,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import "SlideRoutes.dart";
 import 'BacklogListWidget.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 
 bool debugging = true;
 Future showBacklog(BuildContext cnt) async {
@@ -125,7 +126,7 @@ class Database {
   Participant? currentParticipant;
   List<Contractacio> currentContractacions = [];
 
-  Server server = Server("192.168.1.18:8888", "simposi23.php");
+  Server server = Server(Protocol.http, "", "simposi23.php");  // 192.168.1.18
 
   String lastServerError = "";
 
@@ -150,10 +151,67 @@ class Database {
     _tables['Modalitats'] =
         t.Table<Modalitat>('Modalitats', Map<int, Modalitat>());
 
-
+    await loadServerCofiguration();
 
     await loadData();
-    await loadDataFromServer(true);
+    if (server.host.isNotEmpty) {
+      await loadDataFromServer(true);
+    }
+  }
+
+  Future setServerAddress(Protocol protocol, String host, String path) async {
+    server.setAddress(protocol, host, path);
+    saveServerConfiguration();
+    return  loadDataFromServer(true);
+  }
+
+  Future saveServerConfiguration() async{
+    if (kIsWeb){
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('protocol', server.protocol == Protocol.https ? 1 : 0);
+      await prefs.setString('host', server.host);
+      await prefs.setString('url', server.url);
+      print(server.url);
+
+    } else {
+      var dir = (await getApplicationDocumentsDirectory()).path;
+      var path = dir + "/Config.csv";
+      var file = File(path);
+
+      String s = server.protocol == Protocol.https ? "https" : "http" + ";" +
+          server.host + ";" + server.url;
+
+      await file.writeAsString(s, flush: true);
+    }
+
+  }
+
+  Future loadServerCofiguration() async {
+    if (kIsWeb) {
+      final prefs = await SharedPreferences.getInstance();
+
+      server.protocol = (prefs.getInt('protocol') ?? 0) == 1 ? Protocol.https : Protocol.http;
+      server.host = prefs.getString('host') ?? "";
+      server.url = prefs.getString('url') ?? "";
+      print(server.url);
+    } else {
+      var dir = (await getApplicationDocumentsDirectory()).path;
+      var path = dir + "/Config.csv";
+      var file = File(path);
+
+      try {
+        var strData = await file.readAsString();
+        var data = strData.split(";");
+
+        if (data.length == 3) {
+          await setServerAddress(
+              data[0] == "https" ? Protocol.https : Protocol.http, data[1],
+              data[2]);
+        }
+      } catch (e) {
+        print(e.toString());
+      }
+    }
   }
 
   // Subscriptions
@@ -181,6 +239,25 @@ class Database {
   }
 
   // Alerts
+
+ static Future<void> displayTextInputDialog(BuildContext context) async {
+    return showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('TextField in Dialog'),
+            content: TextField(
+              onChanged: (value) {
+                print("New Value : $value");
+              },
+              controller: TextEditingController(),
+              decoration: InputDecoration(hintText: "Text Field in Dialog"),
+            ),
+
+          );
+        });
+  }
+
 
   static displayAlert(
       BuildContext context, String title, String message) async {
@@ -517,7 +594,7 @@ class Database {
     notifySubscriptors(status, data[0], op);
   }
 
-  Future loadDataFromServer(bool includeServeis) async {
+  Future<bool> loadDataFromServer(bool includeServeis) async {
     bool failed = false;
 
     if (includeServeis) {
@@ -568,6 +645,7 @@ class Database {
     await loadCompres();
 
     notifySubscriptors("OK", lastServerError, "");
+    return failed;
   }
 
   Future<bool> loadCompres() async {
@@ -577,10 +655,14 @@ class Database {
           stringOperacio[TipusOperacions.compres]!, "", (List<String> response) {_updateCompres(response, clear:true);});
       lastServerError = "";
     } on http.ClientException catch (e) {
+      if (kIsWeb){    // Web does not have local storage.
+        return true;
+      }
       failed = true;
       addToBacklog(Operacio(TipusOperacions.compres, -1));
       lastServerError = e.toString();
       try {
+
         var dir = (await getApplicationDocumentsDirectory()).path;
         var path = dir + "/Compres.csv";
         var file = File(path);
@@ -682,6 +764,11 @@ class Database {
       _procesaBacklog();
     }   on http.ClientException catch (e) {   //Procés local si la conexió no es correcta
 
+      if (kIsWeb){    // Web does not have local storage.
+        lastServerError = e.toString();
+        return;
+      }
+
       if (!participant.registrat) {
         notifySubscriptors(
             "ERRORR", " $nom encara NO està registrat ", "consumir");
@@ -754,7 +841,12 @@ class Database {
 
       await server.getData(
           stringOperacio[TipusOperacions.compres]!, "", _updateCompres);
-    }catch (e) {
+    }on http.ClientException catch (e) {
+
+      if (kIsWeb){    // Web does not have local storage.
+        lastServerError = e.toString();
+        return;
+      }
 
       // Aqui fem el process local en cas que no hagi sigut possible parlar amb el servidor
 
@@ -844,6 +936,10 @@ class Database {
 
   Future<String> pathFor(String table) async{
 
+    if (kIsWeb){
+      return "";
+    }
+
     var check = table.replaceAll("share", "");
     if (_tables[check] == null){
       throw Exception("Table $table not defined in database");
@@ -854,6 +950,10 @@ class Database {
 
   // Salva Serveis i Participants als fitxers Serveis.csv i Participants.csv
   Future saveData() async {
+
+    if (kIsWeb){    // Web does not have local storage.
+      return;
+    }
 
     var file = File(await pathFor("Serveis"));
     await file.writeAsString(serveisToCSV(allServeis()), flush: true);
@@ -873,6 +973,10 @@ class Database {
 
 // Llegeix  Serveis i Participants dels fitxers Serveis.csv i Participants.csv i genera Contractacions
   Future loadData() async {
+
+    if (kIsWeb){    // Web does not have local storage.
+      return;
+    }
     var dir = (await getApplicationDocumentsDirectory()).path;
 
     try {
@@ -926,6 +1030,9 @@ class Database {
   }
 
   Future saveBacklog() async {
+    if(kIsWeb){
+      return;
+    }
     final String dir = (await getApplicationDocumentsDirectory()).path;
     var path = dir + "/Backlog.csv";
     var file = File(path);
@@ -935,6 +1042,9 @@ class Database {
   }
 
   Future loadBacklog() async {
+    if(kIsWeb){
+      return;
+    }
     try {
       var dir = (await getApplicationDocumentsDirectory()).path;
       var path = dir + "/Backlog.csv";

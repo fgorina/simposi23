@@ -38,7 +38,10 @@ class _ServeiListWidgetState extends State<ServeiListWidget> {
     final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
     if (status != "OK" && _isTopOfNavigationStack) {
-      Database.displayAlert(context, "Error in List", message);
+      //Database.displayAlert(context, "Error in List", message);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     }
     if (_isTopOfNavigationStack) {}
   }

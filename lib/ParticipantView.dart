@@ -59,7 +59,10 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
     final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
     if (status != "OK" && _isTopOfNavigationStack) {
-      Database.displayAlert(context, "STOP", message);
+      //Database.displayAlert(context, "STOP", message);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     }
 
     if (_isTopOfNavigationStack) {

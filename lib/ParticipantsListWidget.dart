@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:simposi23/ParticipantView.dart';
@@ -60,7 +61,10 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
     final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
     if (status != "OK" && _isTopOfNavigationStack){
-      Database.displayAlert(context, "Error in List", message);
+      //Database.displayAlert(context, "Error in List", message);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     }
     if(_isTopOfNavigationStack) {
       String s = controller.text;
@@ -239,14 +243,14 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
       icons.add(IconButton(icon: const Icon(Icons.warning_amber), color: Colors.red, onPressed: showError));
     }
 
-    if(Platform.isAndroid){
-      icons.add (IconButton(icon:  Icon(Icons.share), onPressed: shareParticipants));
+    if(kIsWeb ||Platform.isAndroid){
+      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  Icon(Icons.share), onPressed: shareParticipants));}
       icons.add( IconButton(icon: const Icon(Icons.qr_code), onPressed: scan));
     }else if(Platform.isIOS){
-        icons.add (IconButton(icon:  Icon(CupertinoIcons.share), onPressed: shareParticipants));
+      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  Icon(CupertinoIcons.share), onPressed: shareParticipants));}
         icons.add( IconButton(icon: const Icon(Icons.qr_code), onPressed: scan));
     }else{
-      icons.add (IconButton(icon:  Icon(CupertinoIcons.share), onPressed: shareParticipants));
+      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  Icon(CupertinoIcons.share), onPressed: shareParticipants));}
 
     }
 

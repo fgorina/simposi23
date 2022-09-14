@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:decimal/decimal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -50,7 +51,10 @@ class _CompresListWidgetState extends State<CompresListWidget> {
     final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
     if (status != "OK" && _isTopOfNavigationStack) {
-      Database.displayAlert(context, "Error in Compres List", message);
+      //Database.displayAlert(context, "Error in Compres List", message);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
     }
     if (_isTopOfNavigationStack) {
       setState(() {
@@ -137,7 +141,7 @@ class _CompresListWidgetState extends State<CompresListWidget> {
           onPressed: showError));
     }
     icons.add (IconButton(
-        icon:  Icon(Platform.isAndroid ? Icons.share : CupertinoIcons.share),
+        icon:  Icon((kIsWeb || Platform.isAndroid) ? Icons.share : CupertinoIcons.share),
         onPressed: shareCompres));
 
 
