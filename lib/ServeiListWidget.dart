@@ -55,7 +55,19 @@ class _ServeiListWidgetState extends State<ServeiListWidget> {
 
     // Get number of participants which has payed and number which have already consumed
 
-    var payed = d.searchContractacions((p0) => (p0 as Contractacio).estat > 0 && (p0 as Contractacio).serveiId == servei.id).length;
+    var payed = d.searchContractacions((p0) => (p0 as Contractacio).estat > 0 &&
+        (p0 as Contractacio).serveiId == servei.id).length;
+
+    var toServe = d.searchContractacions((p0) {
+
+      var p = d.findParticipant((p0 as Contractacio).participantId);
+      if(p == null || p.registrat == false){
+        return false;
+      }
+      return (p0 as Contractacio).estat > 0 &&
+          (p0 as Contractacio).serveiId == servei.id;
+
+    }).length;
     var consumed = d.searchContractacions((p0) => (p0 as Contractacio).estat == 2 && (p0 as Contractacio).serveiId == servei.id).length;
     return ListTile(
       tileColor : colorsProductes1[servei.idProducte % colorsProductes1.length],
@@ -63,7 +75,7 @@ class _ServeiListWidgetState extends State<ServeiListWidget> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [Text(
         servei.name,
-      ), Text("$consumed/$payed")],
+      ), Text("$toServe/$payed")],
       ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,8 +85,8 @@ class _ServeiListWidgetState extends State<ServeiListWidget> {
         LinearPercentIndicator(
           lineHeight: 20,
           leading: Text(consumed.toString()),
-          trailing: Text(payed.toString()),
-          percent: consumed/payed,
+          trailing: Text(toServe.toString()),
+          percent: consumed/toServe,
           backgroundColor: colorsProductes[servei.idProducte % colorsProductes.length],
         ),
 
