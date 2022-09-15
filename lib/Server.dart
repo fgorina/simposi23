@@ -1,19 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
-import 'Database.dart';
 import 'HashException.dart';
-
-/***
- *
- * El format de recepció es :
- *
- * Hash
- * Temps
- * Status
- * Dades...
- *
- */
 
 enum Protocol{
   http,

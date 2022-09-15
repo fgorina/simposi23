@@ -60,6 +60,28 @@ function formatResults($result){
 		
 }
 
+function arrayToString($a){
+
+	$data = "";
+	$l = count($a);
+	
+	for($i = 0; $i < $l; $i++){
+		$flag = false;
+			foreach ($a[$i] as $field){
+				if ($flag){
+					$data = $data . ";";
+				}else{
+					$flag = true;
+				}
+				$data = $data . $field;		
+			}
+			$data = $data .  "\n";
+	
+	}
+	
+	return $data;
+}
+
 // FUNCIONS 
 
 // participants. Retorna la llista dels participants
@@ -164,7 +186,7 @@ function compres($id, $mysqli){
 	if($id != ""){
 		$query = "select * from wpdj_pagaia_qr_sympo2023_compres where id = ".$id;
 	}else{
-		$query = "select * from wpdj_pagaia_qr_sympo2023_compres order by id";
+		$query = "select * from wpdj_pagaia_qr_sympo2023_compres order by data desc, id";
 	}
 	
 	$result = $mysqli->query($query);
@@ -238,15 +260,16 @@ function consumir($idParticipant, $idServei, $mysqli){
 	$result = $mysqli->query($query);
 	$a = $result->fetch_all();
 	if(count($a) != 1){
-		return ["ERROR", ["No hi ha un únic participant amb id {$idParticipant}", ""]];
+		return ["ERROR", "No hi ha un únic participant amb id {$idParticipant}\n"];
 	}
 	$participant = $a[0];
+	$data = arrayToString($a);
 	
 	$query = "select field, descripcio from wpdj_pagaia_qr_sympo2023_serveis where id = " . $idServei;
 	$results = $mysqli->query($query);
 	$s = $results->fetch_all();
 	if(count($s) != 1){
-		return ["ERROR", ["No hi ha un servei amb la id  {$idServei}", ""]];
+		return ["ERROR", "No hi ha un servei amb la id  {$idServei}\n{$data}"];
 	}
 
 	$field = $s[0][0];
@@ -294,15 +317,16 @@ function comprar($idParticipant, $idProducte, $terminal, $mysqli){
 	$result = $mysqli->query($query);
 	$a = $result->fetch_all();
 	if(count($a) != 1){
-		return ["ERROR", ["No hi ha un únic participant amb id {$idParticipant}", ""]];
+		return ["ERROR", "No hi ha un únic participant amb id {$idParticipant}\n"];
 	}
 	$participant = $a[0];
+	$data = arrayToString($a);
 	
 	$query = "select descripcio, preu from wpdj_pagaia_qr_sympo2023_productes where id = " . $idProducte;
 	$results = $mysqli->query($query);
 	$s = $results->fetch_all();
 	if(count($s) != 1){
-		return ["ERROR", ["No hi ha un producte amb la id  {$idProducte}", ""]];
+		return ["ERROR", "No hi ha un producte amb la id  {$idProducte}\n{$data}"];
 	}
 
 	$descripcio = $s[0][0];
@@ -327,7 +351,7 @@ function comprar($idParticipant, $idProducte, $terminal, $mysqli){
 		$jacomprat = $resultss->fetch_all();
 		
 		if (count($jacomprat) > 0){
-			return ["ERROR", ["El producte {$descripcio} ja s'ha comprat per {$participant[1]}", "" ]];
+			return ["ERROR", "El producte {$descripcio} ja s'ha comprat per {$participant[1]}\n{$data}"];
 		}
 	
 		// Insert una nova compra. 
@@ -347,8 +371,9 @@ function comprar($idParticipant, $idProducte, $terminal, $mysqli){
 				$query = $query . ", ";
 			}
 	
-			$query = $query . $fields[$il][0]  . " = 1 ";
+			$query = $query . $fields[$il][0]  . " = greatest(1,  " . $fields[$il][0] . ") ";
 		}
+		
 	
 		$query = $query . " where  id = " . $idParticipant;
 	
@@ -367,7 +392,7 @@ function comprar($idParticipant, $idProducte, $terminal, $mysqli){
 	// Return data according to original estat
 	
 	if($registrat != 1){
-		return ["ERROR", "{$participant[1]} encara no s'ha registrat.\n{$data}"];	
+		return ["ERRORR", "{$participant[1]} encara no s'ha registrat.\n{$data}"];	
 	}  else {
 
 		return ["OK", $data];
@@ -459,7 +484,8 @@ function gestionaOp($op, $id, $terminal, $mysqli){
 	return[$status, $data];
 
 }
-
+header("Access-Control-Allow-Origin: *" );
+header("Access-Control-Allow-Methods: GET");
 
 // Main function. No s'ha de tocar
 $db_host = 'localhost';
@@ -471,12 +497,9 @@ $db_port = 8889;
 $secret = "asdjadskfjdaslkfj";
 $alg = "md5";
 
-$op=$_GET['op'];
-$id=$_GET['id'];
-//$terminal = $_GET['terminal'];
-
-
-$terminal = 1;
+$theop=$_GET['op'];
+$theid=$_GET['id'];
+$terminal = $_GET['terminal'];
 
 
 
@@ -485,12 +508,12 @@ if(valida($_GET, $secret, $alg)){
 	$mysqli = new mysqli($db_host, $db_user, $db_password, $db_db);
 	
 	if($mysqli->connect_error){
-		echo buildAnswer($op, mysqli_connect_error(), 'ERROR', $alg, $secret);
+		echo buildAnswer($theop, mysqli_connect_error(), 'ERROR', $alg, $secret);
 		exit();
 	}
 
-	list($status, $data) = gestionaOp($op, $id, $terminal,  $mysqli);
-	echo buildAnswer($op, $data, $status, $alg, $secret);
+	list($status, $data) = gestionaOp($theop, $theid, $terminal,  $mysqli);
+	echo buildAnswer($theop, $data, $status, $alg, $secret);
 	$mysqli->close();
 		
 }else{
