@@ -8,6 +8,7 @@ import 'Servei.dart';
 import 'SlideRoutes.dart';
 import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 import 'IconAndFilesUtilities.dart';
 import 'Contractacio.dart';
 
@@ -58,10 +59,27 @@ class _ServeiListWidgetState extends State<ServeiListWidget> {
     var consumed = d.searchContractacions((p0) => (p0 as Contractacio).estat == 2 && (p0 as Contractacio).serveiId == servei.id).length;
     return ListTile(
       tileColor : colorsProductes1[servei.idProducte % colorsProductes1.length],
-      title: Text(
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [Text(
         servei.name,
+      ), Text("$consumed/$payed")],
       ),
-      subtitle: Text(servei.valid.formatted() + "\nConsumit $consumed de $payed" ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Text(servei.valid.formatted()),
+        LinearPercentIndicator(
+          lineHeight: 20,
+          leading: Text(consumed.toString()),
+          trailing: Text(payed.toString()),
+          percent: consumed/payed,
+          backgroundColor: colorsProductes[servei.idProducte % colorsProductes.length],
+        ),
+
+      ]
+      ),
       onTap: () {},
     );
 

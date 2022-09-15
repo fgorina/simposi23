@@ -46,6 +46,7 @@ dependencies:
   share_plus: ^4.1.0
   barcode_widget: ^2.0.3
   shared_preferences: ^2.0.15
+  percent_indicator: ^4.2.2
 
 dev_dependencies:
   flutter_test:

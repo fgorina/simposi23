@@ -90,9 +90,9 @@ class Server {
   }
 
 
-  Future getData(String op, String id, Function(List<String>) done) async{
+  Future getData(String op, String id, int terminal, Function(List<String>) done) async{
 
-    Map<String, String> query = {"op": op, "id" : id};
+    Map<String, String> query = {"op": op, "id" : id, "terminal" : terminal.toString()};
 
       var answer = await doQuery(query);
       await done(answer);

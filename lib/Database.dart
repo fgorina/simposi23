@@ -19,6 +19,7 @@ import 'package:intl/intl.dart';
 import "SlideRoutes.dart";
 import 'BacklogListWidget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:decimal/decimal.dart';
 
 bool debugging = true;
 Future showBacklog(BuildContext cnt) async {
@@ -127,6 +128,7 @@ class Database {
   List<Contractacio> currentContractacions = [];
 
   Server server = Server(Protocol.http, "", "simposi23.php");  // 192.168.1.18
+  int terminal = 1;
 
   String lastServerError = "";
 
@@ -161,8 +163,8 @@ class Database {
 
   Future setServerAddress(Protocol protocol, String host, String path) async {
     server.setAddress(protocol, host, path);
-    saveServerConfiguration();
-    return  loadDataFromServer(true);
+    await saveServerConfiguration();
+    await  loadDataFromServer(true);
   }
 
   Future saveServerConfiguration() async{
@@ -171,6 +173,7 @@ class Database {
       await prefs.setInt('protocol', server.protocol == Protocol.https ? 1 : 0);
       await prefs.setString('host', server.host);
       await prefs.setString('url', server.url);
+      await prefs.setInt('terminal', terminal);
       print(server.url);
 
     } else {
@@ -179,7 +182,7 @@ class Database {
       var file = File(path);
 
       String s = server.protocol == Protocol.https ? "https" : "http" + ";" +
-          server.host + ";" + server.url;
+          server.host + ";" + server.url + ";" + terminal.toString();
 
       await file.writeAsString(s, flush: true);
     }
@@ -193,6 +196,7 @@ class Database {
       server.protocol = (prefs.getInt('protocol') ?? 0) == 1 ? Protocol.https : Protocol.http;
       server.host = prefs.getString('host') ?? "";
       server.url = prefs.getString('url') ?? "";
+      terminal = prefs.getInt('terminal') ?? 1;
       print(server.url);
     } else {
       var dir = (await getApplicationDocumentsDirectory()).path;
@@ -203,10 +207,15 @@ class Database {
         var strData = await file.readAsString();
         var data = strData.split(";");
 
-        if (data.length == 3) {
+        if (data.length >= 3) {
           await setServerAddress(
               data[0] == "https" ? Protocol.https : Protocol.http, data[1],
               data[2]);
+        }
+        if(data.length > 4){
+          terminal = int.tryParse(data[3]) ?? 1;
+        }else {
+          terminal = 1;
         }
       } catch (e) {
         print(e.toString());
@@ -346,42 +355,42 @@ class Database {
         switch (op.op) {
           case TipusOperacions.productes:
             await server.getData(stringOperacio[TipusOperacions.productes]!,
-                op.idValue(), (List<String> response){ _updateProductes(response, clear: op.idValue().isEmpty);});
+                op.idValue(), terminal, (List<String> response){ _updateProductes(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.serveis:
             await server.getData(stringOperacio[TipusOperacions.serveis]!,
-                op.idValue(),  (List<String> response){_updateServeis(response, clear: op.idValue().isEmpty);});
+                op.idValue(),   terminal, (List<String> response){_updateServeis(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.participants:
             await server.getData(stringOperacio[TipusOperacions.participants]!,
-                op.idValue(),  (List<String> response){_updateParticipants(response, clear: op.idValue().isEmpty);});
+                op.idValue(),   terminal, (List<String> response){_updateParticipants(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.registrar:
             await server.getData(stringOperacio[TipusOperacions.registrar]!,
-                op.idValue(),  (List<String> response){_updateParticipants(response, clear: op.idValue().isEmpty);});
+                op.idValue(),   terminal, (List<String> response){_updateParticipants(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.consumir:
             await server.getData(stringOperacio[TipusOperacions.consumir]!,
-                op.idValue(),  (List<String> response){_updateContractacio(response, clear: op.idValue().isEmpty);});
+                op.idValue(),   terminal, (List<String> response){_updateContractacio(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.comprar:
             await server.getData(stringOperacio[TipusOperacions.comprar]!,
-                op.idValue(),  (List<String> response){_updateContractacio(response, clear: op.idValue().isEmpty);});
+                op.idValue(),   terminal, (List<String> response){_updateContractacio(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.compres:
             await server.getData(stringOperacio[TipusOperacions.compres]!,
-                op.idValue(), (List<String> response){ _updateCompres(response, clear: op.idValue().isEmpty);});
+                op.idValue(),  terminal, (List<String> response){ _updateCompres(response, clear: op.idValue().isEmpty);});
             break;
 
           case TipusOperacions.modalitats:
             await server.getData(stringOperacio[TipusOperacions.modalitats]!,
-                op.idValue(), (List<String> response){ _updateModalitats(response, clear: op.idValue().isEmpty);});
+                op.idValue(),  terminal, (List<String> response){ _updateModalitats(response, clear: op.idValue().isEmpty);});
             break;
 
           default:
@@ -600,7 +609,7 @@ class Database {
     if (includeServeis) {
       try {
         await server.getData(
-            stringOperacio[TipusOperacions.productes]!, "", (List<String> response) {_updateProductes(response, clear: true);});
+            stringOperacio[TipusOperacions.productes]!, "",  terminal, (List<String> response) {_updateProductes(response, clear: true);});
         lastServerError = "";
       }  on http.ClientException catch (e) {
         failed = true;
@@ -609,7 +618,7 @@ class Database {
       }
       try {
         await server.getData(
-            stringOperacio[TipusOperacions.serveis]!, "", (List<String> response) { _updateServeis(response, clear: true);});
+            stringOperacio[TipusOperacions.serveis]!, "",  terminal, (List<String> response) { _updateServeis(response, clear: true);});
         lastServerError = "";
       } on http.ClientException catch (e) {
         failed = true;
@@ -618,7 +627,7 @@ class Database {
       }
         try {
           await server.getData(
-              stringOperacio[TipusOperacions.modalitats]!, "", (List<String> response) { _updateModalitats(response, clear: true);});
+              stringOperacio[TipusOperacions.modalitats]!, "",  terminal, (List<String> response) { _updateModalitats(response, clear: true);});
           lastServerError = "";
         }on http.ClientException  catch (e) {
           failed = true;
@@ -628,8 +637,8 @@ class Database {
       }
 
     try {
-       await server.getData(stringOperacio[TipusOperacions.participants]!, "",
-               (List<String> response) {_updateParticipants(response, clear: true);});
+       await server.getData(stringOperacio[TipusOperacions.participants]!, "", terminal,
+           (List<String> response) {_updateParticipants(response, clear: true);});
       lastServerError = "";
       _procesaBacklog();
     } on http.ClientException catch (e) {
@@ -652,7 +661,7 @@ class Database {
     bool failed = false;
     try {
        await server.getData(
-          stringOperacio[TipusOperacions.compres]!, "", (List<String> response) {_updateCompres(response, clear:true);});
+          stringOperacio[TipusOperacions.compres]!, "",  terminal, (List<String> response) {_updateCompres(response, clear:true);});
       lastServerError = "";
     } on http.ClientException catch (e) {
       if (kIsWeb){    // Web does not have local storage.
@@ -679,7 +688,7 @@ class Database {
   Future updateParticipant(int id) async {
     try {
       await server.getData(stringOperacio[TipusOperacions.participants]!,
-          id.toString(), _updateParticipants);
+          id.toString(),  terminal, _updateParticipants);
       lastServerError = "";
       _procesaBacklog();
     } on http.ClientException catch (e) {
@@ -700,7 +709,7 @@ class Database {
     try {
 
       await server.getData(stringOperacio[TipusOperacions.registrar]!,
-          id.toString(), _updateParticipants);
+          id.toString(),  terminal, _updateParticipants);
       _procesaBacklog();
 
     } on http.ClientException catch (e) {   // Proces Local
@@ -759,7 +768,7 @@ class Database {
     }
 
     try {
-      await server.getData("consumir", id.toString(), _updateContractacio);
+      await server.getData("consumir", id.toString(),  terminal, _updateContractacio);
       lastServerError = "";
       _procesaBacklog();
     }   on http.ClientException catch (e) {   //Procés local si la conexió no es correcta
@@ -837,10 +846,10 @@ class Database {
 
     try {
       await server.getData(stringOperacio[TipusOperacions.comprar]!,
-          id.toString(), _updateContractacio);
+          id.toString(),  terminal, _updateContractacio);
 
       await server.getData(
-          stringOperacio[TipusOperacions.compres]!, "", _updateCompres);
+          stringOperacio[TipusOperacions.compres]!, "",  terminal, _updateCompres);
     }on http.ClientException catch (e) {
 
       if (kIsWeb){    // Web does not have local storage.
@@ -1279,6 +1288,28 @@ class Database {
 
   List<Compra> allCompres() {
     return _tables['Compres']!.all() as List<Compra>;
+  }
+
+  Map<int, Decimal> compresByTerminal(){
+
+    var result = Map<int, Decimal>();
+    var ordered = allCompres();
+
+
+    ordered.forEach((compra) {
+
+      var producte = findProducte(compra.idProducte);
+      if (producte == null){
+        return;
+      }
+
+      var acum = result[compra.terminal] ?? Decimal.zero;
+      var value = acum + producte.preu;
+
+      result[compra.terminal] = value;
+     });
+
+    return result;
   }
 
   List<Modalitat> allModalitats() {

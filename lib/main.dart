@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:simposi23/CompresListWidget.dart';
 import "SlideRoutes.dart";
 import 'ParticipantsListWidget.dart';
@@ -67,6 +69,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   String serverAddress = "";
   String appPath = "";
   Protocol protocol = Protocol.http;
+  int terminal = 1;
 
   bool admin = false;
 
@@ -249,7 +252,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               enableSuggestions: false,
 
               decoration: const InputDecoration(
-                icon: Icon(Icons.person),
+                icon: Icon(Icons.computer),
                 hintText: 'Enter IP:port of the server',
                 labelText: 'Server',
               ),
@@ -266,7 +269,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               autocorrect: false,
               enableSuggestions: false,
              decoration: const InputDecoration(
-                icon: Icon(Icons.person),
+                icon: Icon(CupertinoIcons.gear),
                 hintText: 'Enter the path to the app',
                 labelText: 'Path',
               ),
@@ -275,6 +278,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               },
               validator: (String? value) {
                 //return (value != null && value.contains('@')) ? 'Do not use the @ char.' : null;
+                return null;
+              },
+            ),
+            TextFormField(
+              initialValue: terminal.toString(),
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              autocorrect: false,
+              enableSuggestions: false,
+              decoration: const InputDecoration(
+                icon: Icon(CupertinoIcons.device_phone_portrait),
+                hintText: 'Entreu el número de terminal',
+                labelText: 'Terminal',
+              ),
+              onChanged: (String? value) {
+                terminal = int.tryParse(value ?? "1") ?? 1;
+              },
+              validator: (String? value) {
+                //return (value != null && int.tryParse(value) != null) ? null : "Terminal ha de ser numèric.";
                 return null;
               },
             ),
@@ -291,19 +312,23 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                   // If the form is valid, display a snackbar. In the real world,
                   // you'd often call a server or save the information in a database.
                   try {
+                    print("$protocol://$serverAddress/$appPath $terminal");
+                    database.terminal = terminal;
                     await database.setServerAddress(protocol, serverAddress, appPath);
+
                     if(database.lastServerError.isNotEmpty){
                       database.server.host = "";
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(database.lastServerError)),
+                        SnackBar(content: Text("Error " + database.lastServerError)),
                       );
                     }else {
                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     }
 
-                  } catch (e) {
+                  } catch (e, backtrace) {
+                    print(e.toString() + "\n" + backtrace.toString());
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString())),
+                      SnackBar(content: Text("Error " + e.toString())),
                     );
                     database.server.host = "";
                     setState(() {
@@ -439,6 +464,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 serverAddress = database.server.host;
                 appPath = database.server.url;
                 protocol = database.server.protocol;
+                terminal = database.terminal;
                 database.server.host = "";
               });
             },

@@ -22,11 +22,16 @@ class CompresListWidget extends StatefulWidget {
 }
 
 class _CompresListWidgetState extends State<CompresListWidget> {
+
+  List<Color> colorsTerminals = [Colors.pinkAccent, Colors.tealAccent, Colors.amberAccent, Colors.blueAccent,
+    Colors.cyanAccent, Colors.deepOrangeAccent, Colors.deepPurpleAccent, Colors.greenAccent, Colors.indigoAccent, Colors.lightBlueAccent, Colors.lightGreenAccent];
   TextEditingController controller = TextEditingController();
 
   Database d = Database.shared;
 
   List<Compra> compres = [];
+
+  bool resum = false;
 
   void initState() {
     super.initState();
@@ -85,7 +90,14 @@ class _CompresListWidgetState extends State<CompresListWidget> {
 
   }
 
+  Widget resumWidget(int terminal, Decimal amount, int index){
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [Text("Terminal " + terminal.toString()), Text(amount.toString()),],
+    );
 
+
+  }
 
   Widget compraWidget(Compra compra, int index) {
     DateFormat formatter = DateFormat("dd/MM/yy");
@@ -96,7 +108,7 @@ class _CompresListWidgetState extends State<CompresListWidget> {
     String preu = (producte?.preu ?? Decimal.fromInt(0)).toString() + " €";
 
     return ListTile(
-      tileColor: [Colors.black12, Colors.white][index % 2],
+      tileColor: colorsTerminals[compra.terminal % colorsTerminals.length],
       title: Row(children: [
         Container(
             width: screenWidth(context) - 110,
@@ -113,8 +125,110 @@ class _CompresListWidgetState extends State<CompresListWidget> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget buildResum(BuildContext context){
+
+    List<Widget> icons = [];
+    int c = min(d.backLogCount(), 10);
+    if (c > 0) {
+      icons.add(IconButton(
+          icon: Icon(numberIcons[c - 1]),
+          color: Colors.red,
+          onPressed: () async {
+            await showBacklog(context);
+            setState(() {});
+          }));
+    }
+
+    Decimal total = Decimal.fromInt(0);
+
+    d.allCompres().forEach((element) {
+      Producte? producte = d.findProducte(element.idProducte);
+      total = total + (producte?.preu ?? Decimal.fromInt(0));
+    });
+
+    var compresTerminal = d.compresByTerminal();
+    var keys = compresTerminal.keys.toList();
+    keys.sort((k1, k2)=>k1.compareTo(k2));
+
+
+    if (d.lastServerError.isNotEmpty) {
+      icons.add(IconButton(
+          icon: const Icon(Icons.warning_amber),
+          color: Colors.red,
+          onPressed: showError));
+    }
+
+    if(kIsWeb ||!Platform.isAndroid){
+      icons.add( new CupertinoSwitch(onChanged: (value){setState(() {
+        resum = value;
+      });}, value:resum));
+
+    }else {
+      icons.add(new Switch(onChanged: (value) {
+        setState(() {
+          resum = value;
+        });
+      }, value: resum));
+    }
+
+
+    icons.add (IconButton(
+        icon:  Icon((kIsWeb || !Platform.isAndroid) ? CupertinoIcons.share : Icons.share ),
+        onPressed: shareCompres));
+
+    ScrollController controller = ScrollController();
+
+    return KeyboardSizeProvider(
+      smallSize: 500.0,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text("Compres per Terminal"),
+          actions: icons,
+        ),
+        body: Consumer<ScreenHeight>(builder: (context, _res, child) {
+          return SafeArea(
+            minimum: EdgeInsets.only(
+                left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
+            child: Column(children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Total", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  Text(
+                    total.toString() + " € ",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    textAlign: TextAlign.end,
+                  )
+                ],
+              ),
+              Container(height: 20),
+              Container(
+                height: screenHeight(context) - 200,
+
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  controller: controller,
+                  child: ListView.separated(
+                    itemCount: keys.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return resumWidget(keys[index], compresTerminal[keys[index]] ?? Decimal.zero, index);
+                    },
+                    separatorBuilder: (context, index) {return Divider(color: Colors.white30,);},
+                    controller: controller,
+                    shrinkWrap: true,
+
+                  ),
+
+                ),
+              ),
+            ]),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget buildDetail(BuildContext context) {
     List<Widget> icons = [];
     int c = min(d.backLogCount(), 10);
     if (c > 0) {
@@ -140,9 +254,25 @@ class _CompresListWidgetState extends State<CompresListWidget> {
           color: Colors.red,
           onPressed: showError));
     }
+
+    if(kIsWeb ||!Platform.isAndroid){
+      icons.add( new CupertinoSwitch(onChanged: (value){setState(() {
+        resum = value;
+      });}, value:resum));
+
+    }else {
+      icons.add(new Switch(onChanged: (value) {
+        setState(() {
+          resum = value;
+        });
+      }, value: resum));
+    }
+
+
     icons.add (IconButton(
-        icon:  Icon((kIsWeb || Platform.isAndroid) ? Icons.share : CupertinoIcons.share),
+        icon:  Icon((kIsWeb || !Platform.isAndroid) ? CupertinoIcons.share : Icons.share ),
         onPressed: shareCompres));
+
 
 
     ScrollController controller = ScrollController();
@@ -177,11 +307,12 @@ class _CompresListWidgetState extends State<CompresListWidget> {
                 child: Scrollbar(
                   thumbVisibility: true,
                   controller: controller,
-                  child: ListView.builder(
+                  child: ListView.separated(
                     itemCount: compres.length,
                     itemBuilder: (BuildContext context, int index) {
                       return compraWidget(compres[index], index);
                     },
+                    separatorBuilder: (context, index) {return Divider(color: Colors.white30,);},
                     controller: controller,
                     shrinkWrap: true,
 
@@ -196,5 +327,14 @@ class _CompresListWidgetState extends State<CompresListWidget> {
         }),
       ),
     );
+  }
+@override
+  Widget build(BuildContext context) {
+    if(resum){
+      return buildResum(context);
+    }else{
+      return buildDetail(context);
+    }
+
   }
 }
