@@ -1,20 +1,30 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'Participant.dart';
 import 'Database.dart';
-import 'Servei.dart';
 import 'Producte.dart';
 import 'Contractacio.dart';
 import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
-import 'package:simposi23/LabeledSwitch.dart';
 import 'dart:math';
+import 'dart:io';
 import 'Modalitat.dart';
 import 'ComprarWidget.dart';
 import 'SlideRoutes.dart';
 import 'package:barcode_widget/barcode_widget.dart';
-import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
+import 'package:printing/printing.dart';
+
+List<pw.Widget> pdfStateIcons = [
+  pw.Icon(pw.IconData(0xe510), size: 18),
+  pw.Icon(pw.IconData(0xe86c), size: 18),
+  pw.Icon(pw.IconData(0xe86c), size: 18),
+];
+
 
 class ParticipantViewWidget extends StatefulWidget {
   final String title = "Participants";
@@ -46,6 +56,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
         color: Colors.red,
       )
     ];
+
     d.addSubscriptor(this);
     d.updateParticipant(d.currentParticipant!.id);
   }
@@ -110,6 +121,141 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
     }
   }
 
+  // PDF static functions
+
+  static pw.Widget buildPDFTile(Participant p, Producte pr, pw.Context pdfContext) {
+
+    DateFormat df = DateFormat("dd/MM");
+
+    var serveis = Database.shared.searchServeisProducte(pr);
+    serveis.sort((a, b) => a.id.compareTo(b.id));
+
+    var contractacions = Database.shared.searchContractacionsParticipant(p).where((element) {
+      var servei = Database.shared.findServei(element.serveiId)!;
+      return servei.idProducte == pr.id;
+    }).toList();
+
+    contractacions.sort((a, b) => a.id.compareTo(b.id));
+
+    List<pw.Widget> icons = contractacions.map((contractacio) {
+      if (contractacions.length == 1 ) {
+        return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pdfStateIcons[contractacio.estat],
+            ]);
+      } else {
+        return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Text(df.format(contractacio.valid(Database.shared).start)),
+              pdfStateIcons[contractacio.estat],
+            ]);
+      }
+    }).toList();
+
+    return pw.Column(
+      children: [
+        pw.Text(pr.name),
+        pw.Row(
+            mainAxisAlignment: icons.length == 1
+                ? pw.MainAxisAlignment.center
+                : pw.MainAxisAlignment.spaceBetween,
+            children: icons),
+      ],
+    );
+  }
+
+  static pw.Widget buildPDF(Participant p, pw.Context pdfContext, logo) {
+    Modalitat? modalitat = Database.shared.findModalitat(p.modalitat);
+    String modalitatName =
+        modalitat?.name ?? p.modalitat.toString();
+
+    return pw.Column(
+      children: [
+        // Aqui va el títol i el logo
+
+        pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Image(logo),
+              pw.Column(
+                children: [
+                  pw.Text("IX Simpòsium Internacional",
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                          fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                  pw.Text("de  Caiac de Mar",
+                      textAlign: pw.TextAlign.center,
+                      style: pw.TextStyle(
+                          fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                ],
+              ),
+              pw.Text(p.id.toString(),
+                  style: pw.TextStyle(
+                      fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            ]),
+
+        pw.Divider(),
+        pw.Text(p.name,
+            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+        pw.Text(modalitatName,
+            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+        pw.Container(height: 10),
+
+        pw.Divider(),
+        pw.ListView.separated(
+          itemCount: Database.shared.allProductes().length,
+          itemBuilder: (pw.Context pdfContext, int index) {
+            return buildPDFTile(p, Database.shared.allProductes()[index], pdfContext);
+          },
+          separatorBuilder: (pw.Context pdfContext, int index) {
+            return pw.Divider(color: PdfColors.grey);
+          },
+        ),
+
+        pw.Spacer(),
+        pw.Container(
+          width: 100,
+          height: 100,
+          child: pw.BarcodeWidget(
+              data: Database.shared.paticipantCSV(p), barcode: pw.Barcode.qrCode()),
+        ),
+        pw.Spacer(),
+      ],
+    );
+  }
+
+  static Future<pw.Document> toPdf(Participant p) async {
+    final logo = await imageFromAssetBundle('assets/icon/icon.png');
+
+    final pdf = pw.Document();
+
+    pdf.addPage(pw.Page(
+        theme: pw.ThemeData.withFont(
+          base: await PdfGoogleFonts.varelaRoundRegular(),
+          bold: await PdfGoogleFonts.varelaRoundRegular(),
+          icons: await PdfGoogleFonts.materialIcons(),
+        ),
+        pageFormat: PdfPageFormat.a4,
+        build: (pw.Context pdfContext) {
+          return buildPDF(p, pdfContext, logo);
+        }));
+
+    return pdf;
+   }
+
+  static Future sharePdf(Participant p) async{
+    var pdf = await toPdf(p);
+    await Printing.sharePdf(bytes: await pdf.save(), filename: p.id.toString()+".pdf" );
+  }
+
+  static Future printPdf(Participant p) async{
+    var pdf = await toPdf(p);
+    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+  }
+
   Widget buildTile(Participant p, Producte pr) {
     var serveis = d.searchServeisProducte(pr);
     serveis.sort((a, b) => a.id.compareTo(b.id));
@@ -118,7 +264,6 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
       var servei = d.findServei(element.serveiId)!;
       return servei.idProducte == pr.id;
     }).toList();
-
 
     print("${pr.name} $contractacions");
     contractacions.sort((a, b) => a.id.compareTo(b.id));
@@ -141,7 +286,9 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
         //tileColor: colorsProductes[pr.id % colorsProductes.length],
         title: Text(pr.name),
         subtitle: Row(
-            mainAxisAlignment: icons.length == 1 ? MainAxisAlignment.center : MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: icons.length == 1
+                ? MainAxisAlignment.center
+                : MainAxisAlignment.spaceBetween,
             children: icons));
   }
 
@@ -161,6 +308,34 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
           icon: const Icon(Icons.warning_amber, color: Colors.red),
           onPressed: showError));
     }
+
+    icons.add(IconButton(
+      onPressed: () {
+        printPdf(d.currentParticipant!);
+      },
+      icon: Icon(CupertinoIcons.printer),
+    ));
+
+
+
+    // Here to share means to create a pdf (Glups)
+    if (kIsWeb || !Platform.isAndroid) {
+      icons.add(IconButton(
+        onPressed: () {
+          sharePdf(d.currentParticipant!);
+        },
+        icon: Icon(CupertinoIcons.share),
+      ));
+    }
+    else {
+        icons.add(IconButton(
+          onPressed: () {
+            sharePdf(d.currentParticipant!);
+          },
+          icon: Icon(Icons.share),
+        ));
+      }
+
 
     Modalitat? modalitat = d.findModalitat(d.currentParticipant!.modalitat);
     String modalitatName =
@@ -217,16 +392,16 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
                     thumbVisibility: true,
                     controller: controller,
                     child: ListView.separated(
-                        controller: controller,
-                        itemCount: d.allProductes().length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return buildTile(
-                              d.currentParticipant!, d.allProductes()[index]);
-                        },
-                    separatorBuilder: (BuildContext context, int index) {
-                          return Divider(color: Colors.grey);
-                    },
-                        ),
+                      controller: controller,
+                      itemCount: d.allProductes().length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return buildTile(
+                            d.currentParticipant!, d.allProductes()[index]);
+                      },
+                      separatorBuilder: (BuildContext context, int index) {
+                        return Divider(color: Colors.grey);
+                      },
+                    ),
                   ),
                 ),
                 Spacer(),

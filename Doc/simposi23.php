@@ -86,14 +86,24 @@ function arrayToString($a){
 
 // participants. Retorna la llista dels participants
 
-function participants($id, $mysqli){
+function queryTable($table, $id, $mysqli){
 
+	$tableNames = [];
+	$tableNames["participants"] = "wpdj_pagaia_qr_sympo2023";
+	$tableNames["serveis"] = "wpdj_pagaia_qr_sympo2023_serveis";
+	$tableNames["productes"] = "wpdj_pagaia_qr_sympo2023_productes";
+	$tableNames["compres"] = "wpdj_pagaia_qr_sympo2023_compres";
+	$tableNames["modalitats"] = "wpdj_pagaia_qr_sympo2023_modalitats";
+	$tableNames["estats"] = "wpdj_pagaia_qr_sympo2023_estatss";
+
+	$databaseTable = $tableNames[$table];
+	
 	$data = "";
 	
 	if($id != ""){
-		$query = "select * from wpdj_pagaia_qr_sympo2023 where id = ".$id;
+		$query = "select * from " . $databaseTable . " where id = ".$id;
 	}else{
-		$query = "select * from wpdj_pagaia_qr_sympo2023 order by id";
+		$query = "select * from " . $databaseTable . " order by id";
 	}
 	
 	$result = $mysqli->query($query);
@@ -108,123 +118,6 @@ function participants($id, $mysqli){
 	return $data;
 
 }
-
-function productes($id, $mysqli){
-
-	$data = "";
-	
-	if($id != ""){
-		$query = "select * from wpdj_pagaia_qr_sympo2023_productes where id = ".$id;
-	}else{
-		$query = "select * from wpdj_pagaia_qr_sympo2023_productes order by id";
-	}
-	
-	$result = $mysqli->query($query);
-	
-	
-	if($result != false){
-		$data = formatResults($result);	
-	} else {
-		$data = $mysqli->error;
-	}
-	
-	return $data;
-
-}
-
-function serveis($id, $mysqli){
-
-	$data = "";
-	
-	if($id != ""){
-		$query = "select * from wpdj_pagaia_qr_sympo2023_serveis where id = ".$id;
-	}else{
-		$query = "select * from wpdj_pagaia_qr_sympo2023_serveis order by id";
-	}
-	
-	$result = $mysqli->query($query);
-	
-	
-	if($result != false){
-		$data = formatResults($result);	
-	} else {
-		$data = $mysqli->error;
-	}
-	
-	return $data;
-
-}
-
-
-function estats($id, $mysqli){
-
-	$data = "";
-	
-	if($id != ""){
-		$query = "select * from wpdj_pagaia_qr_sympo2023_estats where id = ".$id;
-	}else{
-		$query = "select * from wpdj_pagaia_qr_sympo2023_estats order by id";
-	}
-	
-	$result = $mysqli->query($query);
-	
-	
-	if($result != false){
-		$data = formatResults($result);	
-	} else {
-		$data = $mysqli->error;
-	}
-	
-	return $data;
-
-}
-
-function compres($id, $mysqli){
-
-	$data = "";
-	
-	if($id != ""){
-		$query = "select * from wpdj_pagaia_qr_sympo2023_compres where id = ".$id;
-	}else{
-		$query = "select * from wpdj_pagaia_qr_sympo2023_compres order by data desc, id";
-	}
-	
-	$result = $mysqli->query($query);
-	
-	
-	if($result != false){
-		$data = formatResults($result);	
-	} else {
-		$data = $mysqli->error;
-	}
-	
-	return $data;
-
-}
-
-function modalitats($id, $mysqli){
-
-	$data = "";
-	
-	if($id != ""){
-		$query = "select * from wpdj_pagaia_qr_sympo2023_modalitats where id = ".$id;
-	}else{
-		$query = "select * from wpdj_pagaia_qr_sympo2023_modalitats order by id";
-	}
-	
-	$result = $mysqli->query($query);
-	
-	
-	if($result != false){
-		$data = formatResults($result);	
-	} else {
-		$data = $mysqli->error;
-	}
-	
-	return $data;
-
-}
-
 
 function registrar($id, $mysqli){
 
@@ -407,38 +300,6 @@ function comprar($idParticipant, $idProducte, $terminal, $mysqli){
 function gestionaOp($op, $id, $terminal, $mysqli){
 
 	switch($op){
-		case "participants":
-			$status = "OK";
-			$data = participants($id, $mysqli);
-			break;
-			
-		case "productes":
-			$status = "OK";
-			$data = productes($id, $mysqli);
-			break;
-
-			
-		case "serveis":
-			$status = "OK";
-			$data = serveis($id, $mysqli);
-			break;
-
-		case "estats":
-			$status = "OK";
-			$data = estats($id, $mysqli);
-			break;
-			
-		case "compres":
-			$status = "OK";
-			$data = compres($id, $mysqli);
-			break;
-
-		case "modalitats":
-			$status = "OK";
-			$data = modalitats($id, $mysqli);
-			break;
-
-			
 		case "registrar":
 			if($id != ""){
 				list($status, $data) = registrar($id, $mysqli);
@@ -475,9 +336,10 @@ function gestionaOp($op, $id, $terminal, $mysqli){
 		break;
 		
 		default:
-			$status = "ERROR";
-			$data = "La operació {$op} no està definida";
+			$status = "OK";
+			$data = queryTable($op, $id, $mysqli);
 			break;
+		
 
 	}
 
