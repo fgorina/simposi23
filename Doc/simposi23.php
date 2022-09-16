@@ -98,6 +98,10 @@ function queryTable($table, $id, $mysqli){
 
 	$databaseTable = $tableNames[$table];
 	
+	if($databaseTable == null){
+		return ["ERROR", "Taula no existent\n"];
+	}
+	
 	$data = "";
 	
 	if($id != ""){
@@ -111,11 +115,12 @@ function queryTable($table, $id, $mysqli){
 	
 	if($result != false){
 		$data = formatResults($result);	
+		return ["OK", $data];
 	} else {
 		$data = $mysqli->error;
+		return ["ERROR", $data];
 	}
-	
-	return $data;
+
 
 }
 
@@ -336,8 +341,8 @@ function gestionaOp($op, $id, $terminal, $mysqli){
 		break;
 		
 		default:
-			$status = "OK";
-			$data = queryTable($op, $id, $mysqli);
+			
+			list($status, $data) = queryTable($op, $id, $mysqli);
 			break;
 		
 
