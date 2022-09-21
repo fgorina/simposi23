@@ -297,10 +297,15 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
     List<Widget> icons = [];
     int c = min(d.backLogCount(), 10);
     if (c > 0) {
-      icons.add(Icon(
-        numberIcons[c - 1],
-        color: Colors.red,
-      ));
+      icons.add(IconButton(
+          icon: Icon(numberIcons[c - 1]),
+          color: Colors.red,
+          onPressed: () async {
+            await showBacklog(context);
+            setState(() {
+
+            });
+          }));
     }
 
     if (d.lastServerError.isNotEmpty) {

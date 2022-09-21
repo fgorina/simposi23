@@ -162,8 +162,6 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
           selectParticipant(d.selectedParticipants[0].id);
         }
       }
-
-
     });
   }
 

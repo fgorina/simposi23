@@ -113,6 +113,8 @@ class Database {
   static final Database shared = Database._constructor();
 
 // Manage subscriptions
+  
+  bool initialized = false;
 
   List subscriptors = [];
 
@@ -159,6 +161,8 @@ class Database {
     if (server.host.isNotEmpty) {
       await loadDataFromServer(true);
     }
+    initialized = true;
+    notifySubscriptors("OK", "", "initialized");
   }
 
   Future setServerAddress(Protocol protocol, String host, String path) async {
@@ -693,6 +697,7 @@ class Database {
       _procesaBacklog();
     } on http.ClientException catch (e) {
       lastServerError = e.toString();
+      addToBacklog(Operacio(TipusOperacions.participants, id));
       notifySubscriptors("OK", lastServerError, "");
      }
   }

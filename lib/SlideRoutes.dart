@@ -69,3 +69,20 @@ class SlideUpRoute extends PageRouteBuilder {
     },
   );
 }
+
+class NoTransitionRoute extends PageRouteBuilder {
+  final Widget widget;
+  NoTransitionRoute({required this.widget})
+      : super(
+    pageBuilder: (BuildContext context, Animation<double> animation,
+        Animation<double> secondaryAnimation) {
+      return widget;
+    },
+    transitionsBuilder: (BuildContext context,
+        Animation<double> animation,
+        Animation<double> secondaryAnimation,
+        Widget child) {
+      return child;
+    },
+  );
+}

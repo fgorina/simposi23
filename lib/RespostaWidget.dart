@@ -34,6 +34,8 @@ class _RespostaWidgetState extends State<RespostaWidget> {
   Image si = getImage("si");
   Image no = getImage("no");
 
+  bool answered = false;
+
   void initState() {
     super.initState();
     d.addSubscriptor(this);
@@ -50,12 +52,14 @@ class _RespostaWidgetState extends State<RespostaWidget> {
     if (op == "consumir") {
       widget.status = status;
       widget.message = message;
+      answered = true;
     }
 
     setState(() {
     });
 
    }
+
   void showError(){
     Database.displayAlert(context, "Error de Connexió", d.lastServerError);
   }
@@ -145,6 +149,30 @@ class _RespostaWidgetState extends State<RespostaWidget> {
       icons.add(IconButton(icon: const Icon(Icons.warning_amber, color: Colors.red), onPressed: showError));
     }
 
+    List<Widget> widgets = [
+      Text(widget.participant.name, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Colors.black)),
+      Spacer(),
+      widget.status == "OK" ? si : no,
+      Spacer(),
+      Text(widget.status == "OK" ? "" : widget.message, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
+      Spacer(),
+      actionWidget() ,
+      Spacer(),
+    ];
+
+    List<Widget> waitingWidgets = [
+      Text(widget.participant.name, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Colors.black)),
+      Spacer(),
+      Container(width: 224, height: 224,
+        child: CupertinoActivityIndicator(animating: true, radius: 30),
+      ),
+      Spacer(),
+      Text(widget.status == "OK" ? "" : widget.message, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
+      Spacer(),
+      actionWidget() ,
+      Spacer(),
+    ];
+
 
 
     return KeyboardSizeProvider(
@@ -164,18 +192,7 @@ class _RespostaWidgetState extends State<RespostaWidget> {
             child: Center(
               child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-
-
-                Text(widget.participant.name, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Colors.black)),
-                Spacer(),
-                widget.status == "OK" ? si : no,
-                Spacer(),
-                Text(widget.status == "OK" ? "" : widget.message, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
-                Spacer(),
-                actionWidget() ,
-                Spacer(),
-              ],
+              children: answered ? widgets : waitingWidgets,
             ),
             ),
           );

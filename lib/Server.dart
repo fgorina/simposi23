@@ -47,17 +47,24 @@ class Server {
       uri = Uri.https(host, url, parameters);
     }
 
-    print(uri.toString());
+    print(uri.toString());    //Important per poder fer debugging
 
       var response = await http.get(uri);
       var headers = response.headers;
-      headers.forEach((key, value) {
-        print("Header |$key| : |$value|");
-      });
       var decoded = utf8.decode(response.bodyBytes);
 
       var lines = decoded.split("\n");
       var hisHash = lines[0];
+
+      var t = DateTime.now().millisecondsSinceEpoch;
+      var t1 = ((double.tryParse(lines[1]) ?? 0.0) * 1000.0).floor();
+
+      var delta = t - t1; // Es en ms.
+
+      print("Delta $delta");
+
+
+    // ToDo Limit value of delta. If > some value (ex. 2s) generate a HashException
 
       if(hisHash == "IR"){
         throw(HashException());
