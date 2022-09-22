@@ -1,12 +1,8 @@
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';import 'Participant.dart';
-import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 import 'dart:math';
-import 'IconAndFilesUtilities.dart';
-
 import 'Database.dart';
-import 'Participant.dart';
 import 'Servei.dart';
 import 'Producte.dart';
 
@@ -113,8 +109,9 @@ class _ComprarWidgetState extends State<ComprarWidget> {
                     alignment: Alignment.center,
                       height: 100,
                       width: 300,
+                      decoration: BoxDecoration(border: Border.all(width: 2)),
                       child: ListView(children: serveis.map((e) => Text(e.name, textAlign: TextAlign.center, style: TextStyle(fontSize: 18))).toList() ),
-                    decoration: BoxDecoration(border: Border.all(width: 2)),
+
                   ),
                   Container(height: 40,),
                   ElevatedButton(onPressed: () async {

@@ -1,17 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:simposi23/CompresListWidget.dart';
 import "SlideRoutes.dart";
-import 'ParticipantsListWidget.dart';
 import 'Database.dart';
 import 'Server.dart';
-import 'Participant.dart';
-import 'Servei.dart';
-import 'ServeiListWidget.dart';
-import 'dart:math';
-import 'LabeledSegments.dart';
 import 'SettingsView.dart';
 import 'MainView.dart';
 
@@ -77,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
    @override
   void initState() {
-    // TODO: implement initState
+
     super.initState();
     database.addSubscriptor(this);
   }
@@ -87,7 +79,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  void modelUpdated(String status, String message, String op) {
+  void modelUpdated(String status, String message, String op) async {
     final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
     if (status != "OK" && _isTopOfNavigationStack) {
@@ -102,15 +94,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     else if (status == "OK" && _isTopOfNavigationStack && database.initialized){
       gotoMainWiew();
     }
-    if (_isTopOfNavigationStack) {
-      setState(() {});
     }
-  }
 
-  void gotoMainWiew() async {
+  Future gotoMainWiew() async {
 
      if(database.server.host.isEmpty){
-       await Navigator.pushReplacement(context, NoTransitionRoute(widget: MainView(title: widget.title)));
+       Navigator.pushReplacement(context, NoTransitionRoute(widget: MainView(title: widget.title)));
        await Navigator.push(
            context, SlideUpRoute(widget: SettingsView(title: widget.title)));
      } else {

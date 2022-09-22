@@ -1,17 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:simposi23/CompresListWidget.dart';
 import "SlideRoutes.dart";
 import 'ParticipantsListWidget.dart';
 import 'Database.dart';
-import 'Server.dart';
 import 'Participant.dart';
 import 'Servei.dart';
 import 'ServeiListWidget.dart';
 import 'dart:math';
-import 'LabeledSegments.dart';
 import 'SettingsView.dart';
 
 
@@ -75,7 +72,9 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
 
       setState(() {});
     }
-    if (_isTopOfNavigationStack) {
+
+    print("MainView isTopOfNavaigationStack $_isTopOfNavigationStack");
+    if (_isTopOfNavigationStack || true) {
       setState(() {});
     }
   }
@@ -268,7 +267,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
       widgetList.add(
         ElevatedButton(
             onPressed: () { gotoSettings(); },
-            child: Text("Reset Server",
+            child: Text("Ajustos",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
                 primary: Colors.white30,

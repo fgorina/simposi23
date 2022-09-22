@@ -155,11 +155,16 @@ class Database {
     _tables['Modalitats'] =
         t.Table<Modalitat>('Modalitats', Map<int, Modalitat>());
 
-    await loadServerCofiguration();
+    try {
+      await loadServerCofiguration();
 
-    await loadData();
-    if (server.host.isNotEmpty) {
-      await loadDataFromServer(true);
+      await loadData();
+      if (server.host.isNotEmpty) {
+        await loadDataFromServer(true);
+
+      }
+    }catch(e){
+
     }
     initialized = true;
     notifySubscriptors("OK", "", "initialized");
@@ -618,7 +623,7 @@ class Database {
       }  on http.ClientException catch (e) {
         failed = true;
         addToBacklog(Operacio(TipusOperacions.productes, -1));
-        lastServerError = e.toString();
+        lastServerError = e.toString() + "\n" + e.message;
       }
       try {
         await server.getData(
@@ -627,7 +632,7 @@ class Database {
       } on http.ClientException catch (e) {
         failed = true;
         addToBacklog(Operacio(TipusOperacions.serveis, -1));
-        lastServerError = e.toString();
+        lastServerError = e.toString() + "\n" + e.message;
       }
         try {
           await server.getData(
@@ -636,7 +641,7 @@ class Database {
         }on http.ClientException  catch (e) {
           failed = true;
           addToBacklog(Operacio(TipusOperacions.modalitats, -1));
-          lastServerError = e.toString();
+          lastServerError = e.toString() + "\n" + e.message;
         }
       }
 
@@ -648,7 +653,7 @@ class Database {
     } on http.ClientException catch (e) {
       failed = true;
       addToBacklog(Operacio(TipusOperacions.participants, -1));
-      lastServerError = e.toString();
+      lastServerError = e.toString() + "\n" + e.message;
     }
 
     if (failed) {
@@ -668,12 +673,13 @@ class Database {
           stringOperacio[TipusOperacions.compres]!, "",  terminal, (List<String> response) {_updateCompres(response, clear:true);});
       lastServerError = "";
     } on http.ClientException catch (e) {
+
       if (kIsWeb){    // Web does not have local storage.
         return true;
       }
       failed = true;
       addToBacklog(Operacio(TipusOperacions.compres, -1));
-      lastServerError = e.toString();
+      lastServerError = e.toString() + "\n" + e.message;
       try {
 
         var dir = (await getApplicationDocumentsDirectory()).path;

@@ -3,16 +3,13 @@ import 'package:decimal/decimal.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:flutter/services.dart';
 import 'dart:math';
 import 'Database.dart';
 import 'Compra.dart';
 import "Participant.dart";
 import 'Producte.dart';
-import 'SlideRoutes.dart';
 import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
-import 'IconAndFilesUtilities.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -159,12 +156,12 @@ class _CompresListWidgetState extends State<CompresListWidget> {
     }
 
     if(kIsWeb ||!Platform.isAndroid){
-      icons.add( new CupertinoSwitch(onChanged: (value){setState(() {
+      icons.add(  CupertinoSwitch(onChanged: (value){setState(() {
         resum = value;
       });}, value:resum));
 
     }else {
-      icons.add(new Switch(onChanged: (value) {
+      icons.add( Switch(onChanged: (value) {
         setState(() {
           resum = value;
         });
@@ -256,12 +253,12 @@ class _CompresListWidgetState extends State<CompresListWidget> {
     }
 
     if(kIsWeb ||!Platform.isAndroid){
-      icons.add( new CupertinoSwitch(onChanged: (value){setState(() {
+      icons.add(  CupertinoSwitch(onChanged: (value){setState(() {
         resum = value;
       });}, value:resum));
 
     }else {
-      icons.add(new Switch(onChanged: (value) {
+      icons.add( Switch(onChanged: (value) {
         setState(() {
           resum = value;
         });

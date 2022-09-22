@@ -2,8 +2,8 @@ import 'DatabaseRecord.dart';
 
 
 class Compra implements DatabaseRecord{
-  int id;
-  String name;
+  @override int id;
+  @override String name;
   DateTime data;
   int idParticipant;
   int idProducte;
@@ -11,16 +11,17 @@ class Compra implements DatabaseRecord{
 
   Compra(this.id, this.name, this.data, this.idParticipant, this.idProducte, this.terminal);
 
+  @override
   bool isEqual(DatabaseRecord r){
     if (this.runtimeType != r.runtimeType){
       return false;
     }
     else{
       var r1 = r as Compra;
-      return this.id == r.id
-          && this.name == r.name
-          && this.data == r1.data
-          && this.terminal == r1.terminal;
+      return id == r.id
+          && name == r.name
+          && data == r1.data
+          && terminal == r1.terminal;
     }
   }
 

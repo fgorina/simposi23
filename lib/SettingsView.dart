@@ -2,28 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:simposi23/CompresListWidget.dart';
-import "SlideRoutes.dart";
-import 'ParticipantsListWidget.dart';
+import 'package:http/http.dart';
 import 'Database.dart';
 import 'Server.dart';
-import 'Participant.dart';
-import 'Servei.dart';
-import 'ServeiListWidget.dart';
 import 'dart:math';
 import 'LabeledSegments.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -56,6 +42,8 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
   @override
   Widget build(BuildContext context) {
     final _formKey = GlobalKey<FormState>();
+
+    String error = "";
 
     List<Widget> icons = [];
     int c = min(database.backLogCount(), 10);
@@ -191,10 +179,21 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
                       Navigator.pop(context);
                     }
-                  } catch (e, backtrace) {
-                    print(e.toString() + "\n" + backtrace.toString());
+                  } on ClientException catch (e){
+                    error = e.toString() + "\n" + e.message + "\n";
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error http" + e.toString())),
+
+                    );
+
+                    setState(() {});
+                  }
+
+                  catch (e, backtrace) {
+                      error = e.toString();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text("Error " + e.toString())),
+
                     );
                     database.server.host = "";
                     setState(() {});
@@ -203,6 +202,7 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
               },
               child: const Text('Guardar'),
             ),
+
           ]),
         ),
       ),

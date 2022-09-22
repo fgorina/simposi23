@@ -1,11 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:math';
 import 'Database.dart';
-import 'Servei.dart';
-import 'SlideRoutes.dart';
-import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 
 
@@ -49,15 +45,15 @@ class _BacklogListWidgetState extends State<BacklogListWidget> {
 
         case TipusOperacions.participants:
             return d.findParticipant(op.id())?.name ?? "";
-            break;
+
 
         case TipusOperacions.productes:
           return d.findProducte(op.id())?.name ?? "";
-          break;
+
 
         case TipusOperacions.serveis:
           return d.findServei(op.id())?.name ?? "";
-          break;
+
 
         case TipusOperacions.consumir:
           int idp = (op.id() / 100).floor();
@@ -66,7 +62,7 @@ class _BacklogListWidgetState extends State<BacklogListWidget> {
           String what =  d.findServei(ids)?.name ?? "";
 
           return "$what per  $who";
-          break;
+
 
         case TipusOperacions.comprar:
 
@@ -76,11 +72,11 @@ class _BacklogListWidgetState extends State<BacklogListWidget> {
           String what =  d.findProducte(ids)?.name ?? "";
 
           return "$what per $who";
-          break;
+
 
         default:
           return op.idValue();
-          break;
+
 
       }
 

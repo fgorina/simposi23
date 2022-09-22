@@ -29,7 +29,7 @@ function valida($params, $secret, $alg){
 
 function buildAnswer($op, $data, $status, $alg, $secret){
 
-	$t = (string)microtime();  // Es podria fer servir time()
+	$t = (string)microtime(true);  // Es podria fer servir time()
 	$answer = $t . "\n" . $status . "\n". $op . "\n" . $data;
 	$hash = hash($alg , $answer . $secret);
 	return  $hash . "\n" . $answer;
