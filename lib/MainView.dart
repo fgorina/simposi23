@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
+
 import 'package:simposi23/CompresListWidget.dart';
 import "SlideRoutes.dart";
 import 'ParticipantsListWidget.dart';
@@ -10,6 +10,7 @@ import 'Servei.dart';
 import 'ServeiListWidget.dart';
 import 'dart:math';
 import 'SettingsView.dart';
+import 'Alerts.dart';
 
 
 class MainView extends StatefulWidget {
@@ -140,16 +141,11 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
   }
 
   void showError() {
-    Database.displayAlert(
+    Alerts.displayAlert(
         context, "Error de Connexió", database.lastServerError);
   }
 
-  void askForServer() {
-    Database.displayTextInputDialog(context);
-  }
-
   @override
-
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
@@ -184,15 +180,20 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
     List<Widget> widgetList = [
       ElevatedButton(
           onPressed: gotoRegistre,
-          onLongPress: () {
-            setState(() {
-              admin = !admin;
-            });
+          onLongPress: () async {
+
+            String? password = await Alerts.displayTextInputDialog(context, title: "Entreu el password", label : "Password", message : "Entreu el password de administració", password : true);
+
+            if (password != null && password.isNotEmpty && password == "um23zap") {
+              setState(() {
+                admin = !admin;
+              });
+            }
           },
           child: Text("Registre",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           style: ElevatedButton.styleFrom(
-              primary: Colors.white30,
+              backgroundColor: Colors.white30,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18.0),
                   side: BorderSide(color: Colors.black)))),
@@ -212,7 +213,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
             child: Text(servei.name,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
-                primary: Colors.white30,
+                backgroundColor: Colors.white30,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18.0),
                     side: BorderSide(color: Colors.black)))),
@@ -229,7 +230,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
           child: Text("Participants",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           style: ElevatedButton.styleFrom(
-              primary: Colors.white30,
+              backgroundColor: Colors.white30,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18.0),
                   side: BorderSide(color: Colors.black)))));
@@ -244,7 +245,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
             child: Text("Compres",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
-                primary: Colors.white30,
+                backgroundColor: Colors.white30,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18.0),
                     side: BorderSide(color: Colors.black)))),
@@ -258,7 +259,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
             child: Text("Serveis",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
-                primary: Colors.white30,
+                backgroundColor: Colors.white30,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18.0),
                     side: BorderSide(color: Colors.black)))),
@@ -270,7 +271,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
             child: Text("Ajustos",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
-                primary: Colors.white30,
+                backgroundColor: Colors.white30,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18.0),
                     side: BorderSide(color: Colors.black)))),

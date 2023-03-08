@@ -1,10 +1,10 @@
-
 import 'package:flutter/material.dart';import 'Participant.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 import 'dart:math';
 import 'Database.dart';
 import 'Servei.dart';
 import 'Producte.dart';
+import 'Alerts.dart';
 
 class ComprarWidget extends StatefulWidget {
 
@@ -52,7 +52,7 @@ class _ComprarWidgetState extends State<ComprarWidget> {
 
   }
   void showError(){
-    Database.displayAlert(context, "Error de Connexió", d.lastServerError);
+    Alerts.displayAlert(context, "Error de Connexió", d.lastServerError);
   }
 
 

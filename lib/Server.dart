@@ -24,7 +24,7 @@ class Server {
     this.host = host;
     this.url = path;
   }
-  Future<List<String>> doQuery(Map<String, String> parameters) async{
+  Future<List<String>> doQuery(Map<String, String> parameters, {String method = 'GET'}) async{
 
     var data  = parameters;
     data["t"] = ((DateTime.now()).millisecondsSinceEpoch).floor().toString();
@@ -42,18 +42,19 @@ class Server {
     String hash =  md5.convert(utf8.encode(body)).toString();
     data["hash"] = hash;
 
-    var uri = Uri.http(host, url, parameters);
+    var uri = method == 'GET' || method == 'DELETE' ?  Uri.http(host, url, data) : Uri.http(host, url);
     if(protocol == Protocol.https){
-      uri = Uri.https(host, url, parameters);
+      uri = method == 'GET' || method == 'DELETE' ?  Uri.https(host, url, data) : Uri.https(host, url);
     }
 
     print(uri.toString());    //Important per poder fer debugging
 
-      var response = await http.get(uri);
+      var response = method == 'GET' ? await http.get(uri) : ((method == 'POST') ? await http.post(uri, body: data) : await http.delete(uri));
       var headers = response.headers;
       var decoded = utf8.decode(response.bodyBytes);
 
       var lines = decoded.split("\n");
+
       var hisHash = lines[0];
 
       var t = DateTime.now().millisecondsSinceEpoch;
@@ -61,24 +62,20 @@ class Server {
 
       var delta = t - t1; // Es en ms.
 
-      print("Delta $delta");
-
-
     // ToDo Limit value of delta. If > some value (ex. 2s) generate a HashException
 
       if(hisHash == "IR"){
         throw(HashException());
       }
-
       var rest = lines.sublist(1);
-
       body = rest.join("\n") + secret;
       hash = md5.convert(utf8.encode(body)).toString();
 
       if (hisHash == hash){
         return rest.sublist(1);
       } else {
-        print("His Hash $hisHash\nMy Hash $hash");
+        print("His Hash $hisHash\n My Hash $hash");
+        print(rest.sublist(1));
         throw(HashException());
       }
 
@@ -94,5 +91,25 @@ class Server {
 
   }
 
+  Future deleteData(String op, String id, int terminal, Function(List<String>) done) async{
 
+    Map<String, String> query = {"op": op, "id" : id, "terminal" : terminal.toString()};
+
+    var answer = await doQuery(query, method : "DELETE");
+    await done(answer);
+    print("Delete ${answer}");
+
+  }
+
+  Future postData(String op, String id, int terminal, Map<String, String> params, Function(List<String>) done) async {
+    Map<String, String> query = {"op": op, "id" : id, "terminal" : terminal.toString()};
+
+    params.forEach((key, value) {
+      query[key] = value;
+    });
+
+    var answer = await doQuery(query, method: 'POST');
+    print(answer);
+    await done(answer);
+  }
 }

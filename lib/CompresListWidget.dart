@@ -12,6 +12,7 @@ import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
+import 'Alerts.dart';
 
 class CompresListWidget extends StatefulWidget {
   @override
@@ -72,7 +73,7 @@ class _CompresListWidgetState extends State<CompresListWidget> {
   }
 
   void showError() {
-    Database.displayAlert(context, "Error de Connexió", d.lastServerError);
+    Alerts.displayAlert(context, "Error de Connexió", d.lastServerError);
   }
 
   void shareCompres() async {

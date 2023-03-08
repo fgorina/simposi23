@@ -6,6 +6,7 @@ import 'Database.dart';
 import 'Server.dart';
 import 'SettingsView.dart';
 import 'MainView.dart';
+import 'Alerts.dart';
 
 void main() {
   runApp(const MyApp());
@@ -122,7 +123,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   void showError() {
-    Database.displayAlert(
+    Alerts.displayAlert(
         context, "Error de Connexió", database.lastServerError);
   }
 

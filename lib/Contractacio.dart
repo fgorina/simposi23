@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'DatabaseRecord.dart';
-
 import 'Servei.dart';
 import 'Database.dart';
-
 import 'Table.dart' as t;
 
 
@@ -46,9 +44,9 @@ class Contractacio implements DatabaseRecord{
 
     List<Contractacio> contractacions = [];
     int participantId = int.parse(fields[0]);
-    for (int i = 4; i < 16; i++){
-       int serveiId = i - 3;
-      int estat = int.parse(fields[i]);
+    for (int i = 8; i < fields.length; i++){
+       int serveiId = i - 7;
+       int estat = int.parse(fields[i]);
 
       Servei? servei = serveis.find(serveiId);
 

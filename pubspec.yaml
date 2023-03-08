@@ -48,6 +48,9 @@ dependencies:
   shared_preferences: ^2.0.15
   percent_indicator: ^4.2.2
   printing: ^5.9.3
+  datetime_picker_formfield: ^2.0.1
+  flutter_slidable: ^2.0.0
+  #legacy_buttons: ^0.0.1
 
 dev_dependencies:
   flutter_test:

@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';import 'Participant.dart';
 import 'Database.dart';
-import 'screensize_reducers.dart';
+
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
-import 'Participant.dart';
+
 import 'Servei.dart';
-import 'Contractacio.dart';
+import 'Alerts.dart';
 import 'dart:math';
 import 'IconAndFilesUtilities.dart';
 import 'SlideRoutes.dart';
@@ -61,7 +61,7 @@ class _RespostaWidgetState extends State<RespostaWidget> {
    }
 
   void showError(){
-    Database.displayAlert(context, "Error de Connexió", d.lastServerError);
+    Alerts.displayAlert(context, "Error de Connexió", d.lastServerError);
   }
 
   Future comprar (Participant participant, Servei servei) async{

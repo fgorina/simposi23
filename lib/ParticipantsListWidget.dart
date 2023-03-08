@@ -6,7 +6,7 @@ import 'Database.dart';
 import 'Participant.dart';
 import 'Contractacio.dart';
 import 'Servei.dart';
-
+import 'Alerts.dart';
 import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 import 'Scanner.dart';
@@ -218,7 +218,7 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
 
 
   void showError(){
-    Database.displayAlert(context, "Error de Connexió", d.lastServerError);
+    Alerts.displayAlert(context, "Error de Connexió", d.lastServerError);
   }
 
 

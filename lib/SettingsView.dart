@@ -7,6 +7,7 @@ import 'Database.dart';
 import 'Server.dart';
 import 'dart:math';
 import 'LabeledSegments.dart';
+import 'Alerts.dart';
 
 class SettingsView extends StatefulWidget {
   const SettingsView({Key? key, required this.title}) : super(key: key);
@@ -35,7 +36,7 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
 
 }
   void showError() {
-    Database.displayAlert(
+    Alerts.displayAlert(
         context, "Error de Connexió", database.lastServerError);
   }
 

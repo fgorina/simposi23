@@ -38,7 +38,6 @@ class Table<T extends DatabaseRecord>{
         _data[r.id] = r;
         _dirty = true;
         return;
-
       }
     }
   }
@@ -52,7 +51,6 @@ class Table<T extends DatabaseRecord>{
     for(var element in records){
       update(element);
     }
-
     _dirty = true;
   }
 

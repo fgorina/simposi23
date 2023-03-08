@@ -1,8 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'Database.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
+import 'Alerts.dart';
 
 
 class BacklogListWidget extends StatefulWidget {
@@ -82,7 +82,7 @@ class _BacklogListWidgetState extends State<BacklogListWidget> {
 
   }
   void showError() {
-    Database.displayAlert(context, "Error de Connexió", d.lastServerError);
+    Alerts.displayAlert(context, "Error de Connexió", d.lastServerError);
   }
 
   @override

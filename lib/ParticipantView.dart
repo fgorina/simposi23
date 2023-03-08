@@ -11,20 +11,19 @@ import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 import 'dart:math';
 import 'dart:io';
 import 'Modalitat.dart';
+import 'Alerts.dart';
 import 'ComprarWidget.dart';
 import 'SlideRoutes.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
-import 'package:share_plus/share_plus.dart';
 import 'package:printing/printing.dart';
 
 List<pw.Widget> pdfStateIcons = [
-  pw.Icon(pw.IconData(0xe510), size: 18),
-  pw.Icon(pw.IconData(0xe86c), size: 18),
-  pw.Icon(pw.IconData(0xe86c), size: 18),
+  pw.Icon(pw.IconData(0xe510), size: 18,),
+  pw.Icon(pw.IconData(0xe86c), size: 18, color: PdfColors.green),
+  pw.Icon(pw.IconData(0xe86c), size: 18, color: PdfColors.red),
 ];
-
 
 class ParticipantViewWidget extends StatefulWidget {
   final String title = "Participants";
@@ -95,7 +94,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
   }
 
   void showError() {
-    Database.displayAlert(context, "Error de Connexió", d.lastServerError);
+    Alerts.displayAlert(context, "Error de Connexió", d.lastServerError);
   }
 
   void consumir(int index) {
@@ -123,14 +122,15 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
 
   // PDF static functions
 
-  static pw.Widget buildPDFTile(Participant p, Producte pr, pw.Context pdfContext) {
-
+  static pw.Widget buildPDFTile(
+      Participant p, Producte pr, pw.Context pdfContext) {
     DateFormat df = DateFormat("dd/MM");
 
     var serveis = Database.shared.searchServeisProducte(pr);
     serveis.sort((a, b) => a.id.compareTo(b.id));
 
-    var contractacions = Database.shared.searchContractacionsParticipant(p).where((element) {
+    var contractacions =
+        Database.shared.searchContractacionsParticipant(p).where((element) {
       var servei = Database.shared.findServei(element.serveiId)!;
       return servei.idProducte == pr.id;
     }).toList();
@@ -138,7 +138,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
     contractacions.sort((a, b) => a.id.compareTo(b.id));
 
     List<pw.Widget> icons = contractacions.map((contractacio) {
-      if (contractacions.length == 1 ) {
+      if (contractacions.length == 1) {
         return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: [
@@ -168,8 +168,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
 
   static pw.Widget buildPDF(Participant p, pw.Context pdfContext, logo) {
     Modalitat? modalitat = Database.shared.findModalitat(p.modalitat);
-    String modalitatName =
-        modalitat?.name ?? p.modalitat.toString();
+    String modalitatName = modalitat?.name ?? p.modalitat.toString();
 
     return pw.Column(
       children: [
@@ -198,17 +197,39 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
             ]),
 
         pw.Divider(),
-        pw.Text(p.name,
-            style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-        pw.Text(modalitatName,
-            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-        pw.Container(height: 10),
+        pw.Row( mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Spacer(),
+
+            pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [pw.Text(p.name,
+                style:
+                    pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+            pw.Text(modalitatName,
+                style:
+                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+            pw.Container(height: 10),
+    ]),
+            pw.Spacer(),
+            pw.Text(p.samarreta),
+          ],
+        ),
+        pw.Container(
+          width: 100,
+          height: 100,
+          child: pw.BarcodeWidget(
+              data: Database.shared.paticipantCSV(p),
+              barcode: pw.Barcode.qrCode()),
+        ),
 
         pw.Divider(),
         pw.ListView.separated(
           itemCount: Database.shared.allProductes().length,
           itemBuilder: (pw.Context pdfContext, int index) {
-            return buildPDFTile(p, Database.shared.allProductes()[index], pdfContext);
+            return buildPDFTile(
+                p, Database.shared.allProductes()[index], pdfContext);
           },
           separatorBuilder: (pw.Context pdfContext, int index) {
             return pw.Divider(color: PdfColors.grey);
@@ -216,13 +237,9 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
         ),
 
         pw.Spacer(),
-        pw.Container(
-          width: 100,
-          height: 100,
-          child: pw.BarcodeWidget(
-              data: Database.shared.paticipantCSV(p), barcode: pw.Barcode.qrCode()),
-        ),
-        pw.Spacer(),
+
+         // Aqui hi era elk QR
+         pw.Spacer(),
       ],
     );
   }
@@ -244,16 +261,18 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
         }));
 
     return pdf;
-   }
-
-  static Future sharePdf(Participant p) async{
-    var pdf = await toPdf(p);
-    await Printing.sharePdf(bytes: await pdf.save(), filename: p.id.toString()+".pdf" );
   }
 
-  static Future printPdf(Participant p) async{
+  static Future sharePdf(Participant p) async {
     var pdf = await toPdf(p);
-    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => pdf.save());
+    await Printing.sharePdf(
+        bytes: await pdf.save(), filename: p.id.toString() + ".pdf");
+  }
+
+  static Future printPdf(Participant p) async {
+    var pdf = await toPdf(p);
+    await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save());
   }
 
   Widget buildTile(Participant p, Producte pr) {
@@ -302,9 +321,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
           color: Colors.red,
           onPressed: () async {
             await showBacklog(context);
-            setState(() {
-
-            });
+            setState(() {});
           }));
     }
 
@@ -321,8 +338,6 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
       icon: Icon(CupertinoIcons.printer),
     ));
 
-
-
     // Here to share means to create a pdf (Glups)
     if (kIsWeb || !Platform.isAndroid) {
       icons.add(IconButton(
@@ -331,16 +346,14 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
         },
         icon: Icon(CupertinoIcons.share),
       ));
+    } else {
+      icons.add(IconButton(
+        onPressed: () {
+          sharePdf(d.currentParticipant!);
+        },
+        icon: Icon(Icons.share),
+      ));
     }
-    else {
-        icons.add(IconButton(
-          onPressed: () {
-            sharePdf(d.currentParticipant!);
-          },
-          icon: Icon(Icons.share),
-        ));
-      }
-
 
     Modalitat? modalitat = d.findModalitat(d.currentParticipant!.modalitat);
     String modalitatName =

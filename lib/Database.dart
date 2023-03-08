@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:simposi23/BacklogListWidget.dart';
 import 'dart:io';
-
 import 'DatabaseRecord.dart';
 import 'Table.dart' as t;
 import 'Participant.dart';
@@ -129,7 +128,7 @@ class Database {
   Participant? currentParticipant;
   List<Contractacio> currentContractacions = [];
 
-  Server server = Server(Protocol.http, "", "simposi23.php");  // 192.168.1.18
+  Server server = Server(Protocol.https, "simposium.pagaia.club", "wp-content/simposi23.php");  // 192.168.1.18
   int terminal = 1;
 
   String lastServerError = "";
@@ -256,51 +255,6 @@ class Database {
     }
   }
 
-  // Alerts
-
- static Future<void> displayTextInputDialog(BuildContext context) async {
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('TextField in Dialog'),
-            content: TextField(
-              onChanged: (value) {
-                print("New Value : $value");
-              },
-              controller: TextEditingController(),
-              decoration: InputDecoration(hintText: "Text Field in Dialog"),
-            ),
-
-          );
-        });
-  }
-
-
-  static displayAlert(
-      BuildContext context, String title, String message) async {
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return CupertinoAlertDialog(
-            title: Text(title),
-            content: Text(
-              message,
-            ),
-            actions: <Widget>[
-              new FlatButton(
-                child: new Text("OK",
-                    style: TextStyle(
-                      fontSize: 18,
-                    )),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              )
-            ],
-          );
-        });
-  }
 
   // Auxiliar
 
@@ -516,6 +470,7 @@ class Database {
 
   Future _updateServeis(List<String> response, {autosave = true, clear = false}) async {
     var status = response[0];
+
     var op = response[1];
     var data = response.sublist(2);
 
@@ -906,6 +861,24 @@ class Database {
     }
   }
 
+  // MAINTENANCE SERVEIS I PRODUCTES
+
+  Future updateServei(Servei servei) async {
+    await server.postData("serveis", servei.id.toString(), terminal, servei.toMap(),
+        _updateServeis);
+  }
+
+  Future deleteServei(Servei servei) async {
+    await server.deleteData("serveis", servei.id.toString(), terminal, (p0){
+      var status = p0[0];
+
+      if(status == "OK"){
+        _tables['Serveis']!.delete(servei);
+        saveData();
+        notifySubscriptors(status, p0[1], 'serveis');
+      }
+    });
+  }
 
   //CSV Conversion
   // Genera un registre de participants a partir de Participant + Contratacions
