@@ -16,14 +16,17 @@ import 'ComprarWidget.dart';
 import 'SlideRoutes.dart';
 import 'package:barcode_widget/barcode_widget.dart';
 import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+
+/*
 List<pw.Widget> pdfStateIcons = [
   pw.Icon(pw.IconData(0xe510), size: 18,),
   pw.Icon(pw.IconData(0xe86c), size: 18, color: PdfColors.green),
   pw.Icon(pw.IconData(0xe86c), size: 18, color: PdfColors.red),
 ];
+*/
+
 
 class ParticipantViewWidget extends StatefulWidget {
   final String title = "Participants";
@@ -121,7 +124,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
   }
 
   // PDF static functions
-
+/*
   static pw.Widget buildPDFTile(
       Participant p, Producte pr, pw.Context pdfContext) {
     DateFormat df = DateFormat("dd/MM");
@@ -262,15 +265,16 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
 
     return pdf;
   }
+*/
 
   static Future sharePdf(Participant p) async {
-    var pdf = await toPdf(p);
+    var pdf = await p.toPdf();
     await Printing.sharePdf(
         bytes: await pdf.save(), filename: p.id.toString() + ".pdf");
   }
 
   static Future printPdf(Participant p) async {
-    var pdf = await toPdf(p);
+    var pdf = await p.toPdf();
     await Printing.layoutPdf(
         onLayout: (PdfPageFormat format) async => pdf.save());
   }
@@ -330,6 +334,16 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
           icon: const Icon(Icons.warning_amber, color: Colors.red),
           onPressed: showError));
     }
+
+    icons.add(IconButton(
+      onPressed: () {
+        if (d.currentParticipant != null) {
+          d.currentParticipant!.sendPdf(test: true);
+        }
+
+      },
+      icon: Icon(CupertinoIcons.mail),
+    ));
 
     icons.add(IconButton(
       onPressed: () {

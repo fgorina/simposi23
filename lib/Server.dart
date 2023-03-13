@@ -51,7 +51,15 @@ class Server {
 
       var response = method == 'GET' ? await http.get(uri) : ((method == 'POST') ? await http.post(uri, body: data) : await http.delete(uri));
       var headers = response.headers;
-      var decoded = utf8.decode(response.bodyBytes);
+      String decoded = "";
+      var b = response.bodyBytes;
+
+      try {
+        decoded = utf8.decode(response.bodyBytes);
+      }
+      catch (e){
+        print(e.toString());
+      }
 
       var lines = decoded.split("\n");
 

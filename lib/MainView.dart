@@ -11,6 +11,10 @@ import 'ServeiListWidget.dart';
 import 'dart:math';
 import 'SettingsView.dart';
 import 'Alerts.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server.dart';
+import 'SendEmailView.dart';
+
 
 
 class MainView extends StatefulWidget {
@@ -128,6 +132,13 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
     setState(() {});
   }
 
+  void sendMails() async {
+
+    await Navigator.push(
+        context, SlideLeftRoute(widget: SendEmailView()));
+    setState(() {});
+
+  }
   void showData(List<String> response) async {
     var status = response[0];
     var op = response[1];
@@ -236,7 +247,20 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
                   side: BorderSide(color: Colors.black)))));
 
       widgetList.add(Text(" "));
-
+      widgetList.add(
+        ElevatedButton(
+            onPressed: () async {
+                sendMails();
+             },
+            child: Text("Enviar missatges",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white30,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18.0),
+                    side: BorderSide(color: Colors.black)))),
+      );
+      widgetList.add(Text(" "));
       widgetList.add(
         ElevatedButton(
             onPressed: () {

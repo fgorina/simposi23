@@ -10,6 +10,7 @@ import 'Contractacio.dart';
 import 'Producte.dart';
 import 'Compra.dart';
 import 'Server.dart';
+import 'Texte.dart';
 import 'package:http/http.dart' as http;
 import 'Modalitat.dart';
 import 'package:flutter/cupertino.dart';
@@ -42,7 +43,8 @@ enum TipusOperacions {
   consumir,
   comprar,
   compres,
-  modalitats
+  modalitats,
+  textes
 }
 
 Map<TipusOperacions, String> stringOperacio = {
@@ -54,6 +56,7 @@ Map<TipusOperacions, String> stringOperacio = {
   TipusOperacions.comprar: "comprar",
   TipusOperacions.compres: "compres",
   TipusOperacions.modalitats: "modalitats",
+  TipusOperacions.textes: "textes",
 };
 
 Map<String, TipusOperacions> operacioString =
@@ -112,14 +115,17 @@ class Database {
   static final Database shared = Database._constructor();
 
 // Manage subscriptions
-  
+
   bool initialized = false;
 
   List subscriptors = [];
 
+  // BackLog
+
   List<Operacio> _backlog = [];
   bool _processingBacklog =
       false; // So we don't execute simultaneusly many _procesaBacklog
+// Tables
 
   final Map<String, t.Table<DatabaseRecord>> _tables =
       Map<String, t.Table<DatabaseRecord>>();
@@ -128,10 +134,18 @@ class Database {
   Participant? currentParticipant;
   List<Contractacio> currentContractacions = [];
 
-  Server server = Server(Protocol.https, "simposium.pagaia.club", "wp-content/simposi23.php");  // 192.168.1.18
+  Server server = Server(Protocol.https, "simposium.pagaia.club",
+      "wp-content/simposi23.php"); // 192.168.1.18
   int terminal = 1;
 
   String lastServerError = "";
+
+
+  String smtpUser = "newsfromsymposium@pagaia.cat";
+  String smtpPassword = "qrPERpacogorina";
+  String fromEmail = "newsfromsymposium@pagaia.cat";
+  String bccEmail = "fgorina@mac.com";
+
 
   Database._constructor() {
     _init();
@@ -153,6 +167,7 @@ class Database {
     _tables['Compres'] = t.Table<Compra>('Compres', Map<int, Compra>());
     _tables['Modalitats'] =
         t.Table<Modalitat>('Modalitats', Map<int, Modalitat>());
+    _tables['Textes'] = t.Table<Texte>('Textes', Map<int, Texte>());
 
     try {
       await loadServerCofiguration();
@@ -160,11 +175,8 @@ class Database {
       await loadData();
       if (server.host.isNotEmpty) {
         await loadDataFromServer(true);
-
       }
-    }catch(e){
-
-    }
+    } catch (e) {}
     initialized = true;
     notifySubscriptors("OK", "", "initialized");
   }
@@ -172,36 +184,42 @@ class Database {
   Future setServerAddress(Protocol protocol, String host, String path) async {
     server.setAddress(protocol, host, path);
     await saveServerConfiguration();
-    await  loadDataFromServer(true);
+    await loadDataFromServer(true);
   }
 
-  Future saveServerConfiguration() async{
-    if (kIsWeb){
+  Future saveServerConfiguration() async {
+    if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('protocol', server.protocol == Protocol.https ? 1 : 0);
       await prefs.setString('host', server.host);
       await prefs.setString('url', server.url);
       await prefs.setInt('terminal', terminal);
       print(server.url);
-
     } else {
       var dir = (await getApplicationDocumentsDirectory()).path;
       var path = dir + "/Config.csv";
       var file = File(path);
 
-      String s = server.protocol == Protocol.https ? "https" : "http" + ";" +
-          server.host + ";" + server.url + ";" + terminal.toString();
+      String s = server.protocol == Protocol.https
+          ? "https"
+          : "http" +
+              ";" +
+              server.host +
+              ";" +
+              server.url +
+              ";" +
+              terminal.toString();
 
       await file.writeAsString(s, flush: true);
     }
-
   }
 
   Future loadServerCofiguration() async {
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
 
-      server.protocol = (prefs.getInt('protocol') ?? 0) == 1 ? Protocol.https : Protocol.http;
+      server.protocol =
+          (prefs.getInt('protocol') ?? 0) == 1 ? Protocol.https : Protocol.http;
       server.host = prefs.getString('host') ?? "";
       server.url = prefs.getString('url') ?? "";
       terminal = prefs.getInt('terminal') ?? 1;
@@ -217,12 +235,13 @@ class Database {
 
         if (data.length >= 3) {
           await setServerAddress(
-              data[0] == "https" ? Protocol.https : Protocol.http, data[1],
+              data[0] == "https" ? Protocol.https : Protocol.http,
+              data[1],
               data[2]);
         }
-        if(data.length > 4){
+        if (data.length > 4) {
           terminal = int.tryParse(data[3]) ?? 1;
-        }else {
+        } else {
           terminal = 1;
         }
       } catch (e) {
@@ -254,7 +273,6 @@ class Database {
       object.modelUpdated(status, message, op);
     }
   }
-
 
   // Auxiliar
 
@@ -314,46 +332,68 @@ class Database {
       while (_backlog.length > 0 && i > 0) {
         Operacio op = _backlog[0];
 
-
         switch (op.op) {
           case TipusOperacions.productes:
             await server.getData(stringOperacio[TipusOperacions.productes]!,
-                op.idValue(), terminal, (List<String> response){ _updateProductes(response, clear: op.idValue().isEmpty);});
+                op.idValue(), terminal, (List<String> response) {
+              _updateProductes(response, clear: op.idValue().isEmpty);
+            });
             break;
 
           case TipusOperacions.serveis:
             await server.getData(stringOperacio[TipusOperacions.serveis]!,
-                op.idValue(),   terminal, (List<String> response){_updateServeis(response, clear: op.idValue().isEmpty);});
+                op.idValue(), terminal, (List<String> response) {
+              _updateServeis(response, clear: op.idValue().isEmpty);
+            });
             break;
 
           case TipusOperacions.participants:
             await server.getData(stringOperacio[TipusOperacions.participants]!,
-                op.idValue(),   terminal, (List<String> response){_updateParticipants(response, clear: op.idValue().isEmpty);});
+                op.idValue(), terminal, (List<String> response) {
+              _updateParticipants(response, clear: op.idValue().isEmpty);
+            });
             break;
 
           case TipusOperacions.registrar:
             await server.getData(stringOperacio[TipusOperacions.registrar]!,
-                op.idValue(),   terminal, (List<String> response){_updateParticipants(response, clear: op.idValue().isEmpty);});
+                op.idValue(), terminal, (List<String> response) {
+              _updateParticipants(response, clear: op.idValue().isEmpty);
+            });
             break;
 
           case TipusOperacions.consumir:
             await server.getData(stringOperacio[TipusOperacions.consumir]!,
-                op.idValue(),   terminal, (List<String> response){_updateContractacio(response, clear: op.idValue().isEmpty);});
+                op.idValue(), terminal, (List<String> response) {
+              _updateContractacio(response, clear: op.idValue().isEmpty);
+            });
             break;
 
           case TipusOperacions.comprar:
             await server.getData(stringOperacio[TipusOperacions.comprar]!,
-                op.idValue(),   terminal, (List<String> response){_updateContractacio(response, clear: op.idValue().isEmpty);});
+                op.idValue(), terminal, (List<String> response) {
+              _updateContractacio(response, clear: op.idValue().isEmpty);
+            });
             break;
 
           case TipusOperacions.compres:
             await server.getData(stringOperacio[TipusOperacions.compres]!,
-                op.idValue(),  terminal, (List<String> response){ _updateCompres(response, clear: op.idValue().isEmpty);});
+                op.idValue(), terminal, (List<String> response) {
+              _updateCompres(response, clear: op.idValue().isEmpty);
+            });
             break;
 
           case TipusOperacions.modalitats:
             await server.getData(stringOperacio[TipusOperacions.modalitats]!,
-                op.idValue(),  terminal, (List<String> response){ _updateModalitats(response, clear: op.idValue().isEmpty);});
+                op.idValue(), terminal, (List<String> response) {
+              _updateModalitats(response, clear: op.idValue().isEmpty);
+            });
+            break;
+          case TipusOperacions.textes:
+            await server.getData(
+                stringOperacio[TipusOperacions.textes]!, op.idValue(), terminal,
+                (List<String> response) {
+              _updateModalitats(response, clear: op.idValue().isEmpty);
+            });
             break;
 
           default:
@@ -377,16 +417,16 @@ class Database {
 
   // Server connection
 
-  Future _updateParticipants(List<String> response, {autosave = true, clear = false}) async {
+  Future _updateParticipants(List<String> response,
+      {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
-      if(clear) {
+      if (clear) {
         _tables['Participants']!.clear();
         _tables['Contractacions']!.clear();
-
       }
 
       for (var row in data) {
@@ -410,16 +450,16 @@ class Database {
     notifySubscriptors(status, data[0], op);
   }
 
-  Future _updateContractacio(List<String> response, {autosave = true, clear = false}) async {
+  Future _updateContractacio(List<String> response,
+      {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
-      if(clear) {
+      if (clear) {
         _tables['Participants']!.clear();
         _tables['Contractacions']!.clear();
-
       }
 
       var row = data[0];
@@ -438,24 +478,21 @@ class Database {
         saveData();
       }
     } else {
-      if(clear) {
+      if (clear) {
         _tables['Participants']!.clear();
         _tables['Contractacions']!.clear();
-
       }
 
       if (data.length >= 2) {
         var row = data[1];
         if (row.isNotEmpty) {
-
           Participant p = Participant.fromCSV(row);
           _tables['Participants']!.addAll([p] as List<Participant>);
 
           // Now update contractacions
           List<Contractacio> contractacions =
               Contractacio.fromCSV(row, _tables['Serveis'] as t.Table<Servei>);
-          _tables['Contractacions']!
-              .addAll(contractacions);
+          _tables['Contractacions']!.addAll(contractacions);
 
           currentParticipant = p;
           currentContractacions = contractacions;
@@ -468,15 +505,15 @@ class Database {
     notifySubscriptors(status, data[0], op);
   }
 
-  Future _updateServeis(List<String> response, {autosave = true, clear = false}) async {
+  Future _updateServeis(List<String> response,
+      {autosave = true, clear = false}) async {
     var status = response[0];
 
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
-
-      if(clear) {
+      if (clear) {
         _tables['Serveis']!.clear();
       }
 
@@ -493,14 +530,14 @@ class Database {
     notifySubscriptors(status, data[0], op);
   }
 
-  Future _updateProductes(List<String> response, {autosave = true, clear = false}) async {
+  Future _updateProductes(List<String> response,
+      {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
-
-      if(clear) {
+      if (clear) {
         _tables['Productes']!.clear();
       }
 
@@ -517,14 +554,14 @@ class Database {
     notifySubscriptors(status, data[0], op);
   }
 
-  Future _updateCompres(List<String> response, {autosave = true, clear = false}) async {
+  Future _updateCompres(List<String> response,
+      {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
-
-      if(clear) {
+      if (clear) {
         _tables['Compres']!.clear();
       }
 
@@ -543,13 +580,14 @@ class Database {
     notifySubscriptors(status, data[0], op);
   }
 
-  Future _updateModalitats(List<String> response, {autosave: true, clear: false}) async {
+  Future _updateModalitats(List<String> response,
+      {autosave: true, clear: false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
 
     if (status == "OK") {
-      if(clear) {
+      if (clear) {
         _tables['Modalitats']!.clear();
       }
 
@@ -567,42 +605,94 @@ class Database {
     notifySubscriptors(status, data[0], op);
   }
 
+  Future _updateTexte(List<String> response,
+      {autosave: true, clear: false}) async {
+    var status = response[0];
+    var op = response[1];
+    var data = response.sublist(2);
+
+    if (status == "OK") {
+      if (clear) {
+        _tables['Textes']!.clear();
+      }
+
+      for (var row in data) {
+        if (row.isNotEmpty) {
+          Texte texte = Texte.fromCSV(row);
+
+          _tables['Textes']!.addAll([texte] as List<Texte>);
+        }
+      }
+      if (autosave) {
+        saveData();
+      }
+    }
+    notifySubscriptors(status, data[0], op);
+  }
+
   Future<bool> loadDataFromServer(bool includeServeis) async {
     bool failed = false;
 
     if (includeServeis) {
       try {
-        await server.getData(
-            stringOperacio[TipusOperacions.productes]!, "",  terminal, (List<String> response) {_updateProductes(response, clear: true);});
+        await server
+            .getData(stringOperacio[TipusOperacions.productes]!, "", terminal,
+                (List<String> response) {
+          _updateProductes(response, clear: true);
+        });
         lastServerError = "";
-      }  on http.ClientException catch (e) {
+      } on http.ClientException catch (e) {
         failed = true;
         addToBacklog(Operacio(TipusOperacions.productes, -1));
         lastServerError = e.toString() + "\n" + e.message;
       }
       try {
-        await server.getData(
-            stringOperacio[TipusOperacions.serveis]!, "",  terminal, (List<String> response) { _updateServeis(response, clear: true);});
+        await server
+            .getData(stringOperacio[TipusOperacions.serveis]!, "", terminal,
+                (List<String> response) {
+          _updateServeis(response, clear: true);
+        });
         lastServerError = "";
       } on http.ClientException catch (e) {
         failed = true;
         addToBacklog(Operacio(TipusOperacions.serveis, -1));
         lastServerError = e.toString() + "\n" + e.message;
       }
-        try {
-          await server.getData(
-              stringOperacio[TipusOperacions.modalitats]!, "",  terminal, (List<String> response) { _updateModalitats(response, clear: true);});
-          lastServerError = "";
-        }on http.ClientException  catch (e) {
-          failed = true;
-          addToBacklog(Operacio(TipusOperacions.modalitats, -1));
-          lastServerError = e.toString() + "\n" + e.message;
-        }
+      try {
+        await server
+            .getData(stringOperacio[TipusOperacions.modalitats]!, "", terminal,
+                (List<String> response) {
+          _updateModalitats(response, clear: true);
+        });
+        lastServerError = "";
+      } on http.ClientException catch (e) {
+        failed = true;
+        addToBacklog(Operacio(TipusOperacions.modalitats, -1));
+        lastServerError = e.toString() + "\n" + e.message;
       }
 
+    }
+
     try {
-       await server.getData(stringOperacio[TipusOperacions.participants]!, "", terminal,
-           (List<String> response) {_updateParticipants(response, clear: true);});
+
+      try {
+        await server
+            .getData(stringOperacio[TipusOperacions.textes]!, "", terminal,
+                (List<String> response) {
+              _updateTexte(response, clear: true);
+            });
+        lastServerError = "";
+      } on http.ClientException catch (e) {
+        failed = true;
+        addToBacklog(Operacio(TipusOperacions.textes, -1));
+        lastServerError = e.toString() + "\n" + e.message;
+      }
+
+      await server
+          .getData(stringOperacio[TipusOperacions.participants]!, "", terminal,
+              (List<String> response) {
+        _updateParticipants(response, clear: true);
+      });
       lastServerError = "";
       _procesaBacklog();
     } on http.ClientException catch (e) {
@@ -624,24 +714,27 @@ class Database {
   Future<bool> loadCompres() async {
     bool failed = false;
     try {
-       await server.getData(
-          stringOperacio[TipusOperacions.compres]!, "",  terminal, (List<String> response) {_updateCompres(response, clear:true);});
+      await server
+          .getData(stringOperacio[TipusOperacions.compres]!, "", terminal,
+              (List<String> response) {
+        _updateCompres(response, clear: true);
+      });
       lastServerError = "";
     } on http.ClientException catch (e) {
-
-      if (kIsWeb){    // Web does not have local storage.
+      if (kIsWeb) {
+        // Web does not have local storage.
         return true;
       }
       failed = true;
       addToBacklog(Operacio(TipusOperacions.compres, -1));
       lastServerError = e.toString() + "\n" + e.message;
       try {
-
         var dir = (await getApplicationDocumentsDirectory()).path;
         var path = dir + "/Compres.csv";
         var file = File(path);
         var compresData = await file.readAsString();
-        await _updateCompres(compresData.split("\n"), autosave: false, clear: true);
+        await _updateCompres(compresData.split("\n"),
+            autosave: false, clear: true);
       } catch (e) {
         print("Error loading Compres.csv ${e.toString()}");
       }
@@ -653,32 +746,32 @@ class Database {
   Future updateParticipant(int id) async {
     try {
       await server.getData(stringOperacio[TipusOperacions.participants]!,
-          id.toString(),  terminal, _updateParticipants);
+          id.toString(), terminal, _updateParticipants);
       lastServerError = "";
       _procesaBacklog();
     } on http.ClientException catch (e) {
       lastServerError = e.toString();
       addToBacklog(Operacio(TipusOperacions.participants, id));
       notifySubscriptors("OK", lastServerError, "");
-     }
+    }
   }
 
   Future registrarParticipant(int id) async {
-
     Participant? participant = findParticipant(id);
     if (participant == null) {
-      notifySubscriptors("ERROR",
-          "El participant amb id $id no hi es a la base de dades.", "registrar");
+      notifySubscriptors(
+          "ERROR",
+          "El participant amb id $id no hi es a la base de dades.",
+          "registrar");
       return;
     }
 
     try {
-
       await server.getData(stringOperacio[TipusOperacions.registrar]!,
-          id.toString(),  terminal, _updateParticipants);
+          id.toString(), terminal, _updateParticipants);
       _procesaBacklog();
-
-    } on http.ClientException catch (e) {   // Proces Local
+    } on http.ClientException catch (e) {
+      // Proces Local
 
       if (participant.registrat) {
         notifySubscriptors(
@@ -689,7 +782,6 @@ class Database {
       participant.registrat = true;
       saveData();
       notifySubscriptors("OK", "", "registrar");
-
 
       lastServerError = e.toString();
       notifySubscriptors("OK", lastServerError, "");
@@ -734,12 +826,15 @@ class Database {
     }
 
     try {
-      await server.getData("consumir", id.toString(),  terminal, _updateContractacio);
+      await server.getData(
+          "consumir", id.toString(), terminal, _updateContractacio);
       lastServerError = "";
       _procesaBacklog();
-    }   on http.ClientException catch (e) {   //Procés local si la conexió no es correcta
+    } on http.ClientException catch (e) {
+      //Procés local si la conexió no es correcta
 
-      if (kIsWeb){    // Web does not have local storage.
+      if (kIsWeb) {
+        // Web does not have local storage.
         lastServerError = e.toString();
         return;
       }
@@ -761,7 +856,6 @@ class Database {
             "ERROR", " $nom ja ha consumit $nomServei ", "consumir");
         return;
       }
-
 
       contractacio.estat = 2;
       saveData();
@@ -812,13 +906,13 @@ class Database {
 
     try {
       await server.getData(stringOperacio[TipusOperacions.comprar]!,
-          id.toString(),  terminal, _updateContractacio);
+          id.toString(), terminal, _updateContractacio);
 
-      await server.getData(
-          stringOperacio[TipusOperacions.compres]!, "",  terminal, _updateCompres);
-    }on http.ClientException catch (e) {
-
-      if (kIsWeb){    // Web does not have local storage.
+      await server.getData(stringOperacio[TipusOperacions.compres]!, "",
+          terminal, _updateCompres);
+    } on http.ClientException catch (e) {
+      if (kIsWeb) {
+        // Web does not have local storage.
         lastServerError = e.toString();
         return;
       }
@@ -864,15 +958,15 @@ class Database {
   // MAINTENANCE SERVEIS I PRODUCTES
 
   Future updateServei(Servei servei) async {
-    await server.postData("serveis", servei.id.toString(), terminal, servei.toMap(),
-        _updateServeis);
+    await server.postData("serveis", servei.id.toString(), terminal,
+        servei.toMap(), _updateServeis);
   }
 
   Future deleteServei(Servei servei) async {
-    await server.deleteData("serveis", servei.id.toString(), terminal, (p0){
+    await server.deleteData("serveis", servei.id.toString(), terminal, (p0) {
       var status = p0[0];
 
-      if(status == "OK"){
+      if (status == "OK") {
         _tables['Serveis']!.delete(servei);
         saveData();
         notifySubscriptors(status, p0[1], 'serveis');
@@ -925,16 +1019,21 @@ class Database {
     return s;
   }
 
+  String texteToCSV(List<Texte> textes) {
+    String s = textes.map((e) => e.toCSV()).join("\n");
+    return "OK\ntexte\n$s";
+    return s;
+  }
+
   // Saving a revocering data locally
 
-  Future<String> pathFor(String table) async{
-
-    if (kIsWeb){
+  Future<String> pathFor(String table) async {
+    if (kIsWeb) {
       return "";
     }
 
     var check = table.replaceAll("share", "");
-    if (_tables[check] == null){
+    if (_tables[check] == null) {
       throw Exception("Table $table not defined in database");
     }
     final String dir = (await getApplicationDocumentsDirectory()).path;
@@ -943,8 +1042,8 @@ class Database {
 
   // Salva Serveis i Participants als fitxers Serveis.csv i Participants.csv
   Future saveData() async {
-
-    if (kIsWeb){    // Web does not have local storage.
+    if (kIsWeb) {
+      // Web does not have local storage.
       return;
     }
 
@@ -962,12 +1061,14 @@ class Database {
 
     file = File(await pathFor("Modalitats"));
     await file.writeAsString(modalitatsToCSV(allModalitats()), flush: true);
+    file = File(await pathFor("Textes"));
+    await file.writeAsString(texteToCSV(allTextes()), flush: true);
   }
 
 // Llegeix  Serveis i Participants dels fitxers Serveis.csv i Participants.csv i genera Contractacions
   Future loadData() async {
-
-    if (kIsWeb){    // Web does not have local storage.
+    if (kIsWeb) {
+      // Web does not have local storage.
       return;
     }
     var dir = (await getApplicationDocumentsDirectory()).path;
@@ -976,7 +1077,8 @@ class Database {
       var path = dir + "/Productes.csv";
       var file = File(path);
       var productesData = await file.readAsString();
-       await _updateProductes(productesData.split("\n"), autosave: false, clear: true);
+      await _updateProductes(productesData.split("\n"),
+          autosave: false, clear: true);
     } catch (e) {
       print("Error loading Productes.csv ${e.toString()}");
     }
@@ -985,7 +1087,8 @@ class Database {
       var path = dir + "/Serveis.csv";
       var file = File(path);
       var serveisData = await file.readAsString();
-      await _updateServeis(serveisData.split("\n"), autosave: false, clear: true);
+      await _updateServeis(serveisData.split("\n"),
+          autosave: false, clear: true);
     } catch (e) {
       print("Error loading Serveis.csv ${e.toString()}");
     }
@@ -993,7 +1096,8 @@ class Database {
       var path = dir + "/Participants.csv";
       var file = File(path);
       var participantsData = await file.readAsString();
-       await _updateParticipants(participantsData.split("\n"), autosave: false, clear: true);
+      await _updateParticipants(participantsData.split("\n"),
+          autosave: false, clear: true);
     } catch (e) {
       print("Error loading Participants.csv ${e.toString()}");
     }
@@ -1001,7 +1105,8 @@ class Database {
       var path = dir + "/Compres.csv";
       var file = File(path);
       var compresData = await file.readAsString();
-      await _updateCompres(compresData.split("\n"), autosave: false, clear: true);
+      await _updateCompres(compresData.split("\n"),
+          autosave: false, clear: true);
     } catch (e) {
       print("Error loading Compres.csv ${e.toString()}");
     }
@@ -1010,9 +1115,18 @@ class Database {
       var path = dir + "/Modalitats.csv";
       var file = File(path);
       var modalitatsData = await file.readAsString();
-      await _updateModalitats(modalitatsData.split("\n"), autosave: false, clear: true);
+      await _updateModalitats(modalitatsData.split("\n"),
+          autosave: false, clear: true);
     } catch (e) {
       print("Error loading Modalitats.csv ${e.toString()}");
+    }
+    try {
+      var path = dir + "/Textes.csv";
+      var file = File(path);
+      var texteData = await file.readAsString();
+      await _updateTexte(texteData.split("\n"), autosave: false, clear: true);
+    } catch (e) {
+      print("Error loading Textes.csv ${e.toString()}");
     }
 
     try {
@@ -1023,7 +1137,7 @@ class Database {
   }
 
   Future saveBacklog() async {
-    if(kIsWeb){
+    if (kIsWeb) {
       return;
     }
     final String dir = (await getApplicationDocumentsDirectory()).path;
@@ -1035,7 +1149,7 @@ class Database {
   }
 
   Future loadBacklog() async {
-    if(kIsWeb){
+    if (kIsWeb) {
       return;
     }
     try {
@@ -1054,38 +1168,35 @@ class Database {
   // Share data. Fa el join per exportar dades inteligibles per tothom
 
   String shareCompresData() {
-
     var compres = allCompres();
-    compres.sort(
-            (Compra a, Compra b){
-          return a.data.compareTo(b.data);
-        }
-    );
+    compres.sort((Compra a, Compra b) {
+      return a.data.compareTo(b.data);
+    });
 
-    var titles = "id;Data;id Participant;id Producte;Terminal;Nom Participant;Nom Prodcte;Preu";
-    return titles + "\n" + compres.map((compra) {
+    var titles =
+        "id;Data;id Participant;id Producte;Terminal;Nom Participant;Nom Prodcte;Preu";
+    return titles +
+        "\n" +
+        compres.map((compra) {
+          Participant? participant = findParticipant(compra.idParticipant);
+          Producte? producte = findProducte(compra.idProducte);
 
-      Participant? participant = findParticipant(compra.idParticipant);
-      Producte? producte = findProducte(compra.idProducte);
+          String output = compra.toCSV();
+          if (participant != null) {
+            output = output + ";" + participant.name;
+          } else {
+            output = output + ";";
+          }
 
-      String output = compra.toCSV();
-      if(participant != null){
-        output = output + ";" + participant.name;
-      }else {
-        output = output + ";";
-      }
-
-      if(producte != null){
-        output = output + ";" + producte.name + ";" + producte.preu.toString();
-      }else {
-        output = output + ";;0.0";
-      }
-      return output;
-    }).join("\n");
-
-
+          if (producte != null) {
+            output =
+                output + ";" + producte.name + ";" + producte.preu.toString();
+          } else {
+            output = output + ";;0.0";
+          }
+          return output;
+        }).join("\n");
   }
-
 
   String paticipantCSVShare(Participant p) {
     List<Contractacio> contractacions = p.contractacions();
@@ -1099,30 +1210,29 @@ class Database {
 
     return s;
   }
-  String shareParticipantsData(){
+
+  String shareParticipantsData() {
     var titles = "id;Nom;Modalitat;Registrat;";
 
     var serveis = allServeis();
-    serveis.sort(
-        (a, b) => a.id.compareTo(b.id)
-    );
+    serveis.sort((a, b) => a.id.compareTo(b.id));
 
-    titles += (serveis.map((e) => e.name ).join(";")) + ";Modalitat";
+    titles += (serveis.map((e) => e.name).join(";")) + ";Modalitat";
     var participants = allParticipants();
 
-    return titles + "\n" +  participants.map((participant) {
-      var output = paticipantCSVShare(participant);
-      var modalitat = findModalitat(participant.modalitat);
-      if(modalitat != null) {
-        output += ";${modalitat.name}";
-      }else{
-        output += ";";
-      }
-      return output;
-    }).join("\n");
-
+    return titles +
+        "\n" +
+        participants.map((participant) {
+          var output = paticipantCSVShare(participant);
+          var modalitat = findModalitat(participant.modalitat);
+          if (modalitat != null) {
+            output += ";${modalitat.name}";
+          } else {
+            output += ";";
+          }
+          return output;
+        }).join("\n");
   }
-
 
   // Funcions específiques
 
@@ -1204,7 +1314,7 @@ class Database {
   }
 
   List<Participant> searchParticipants(bool Function(DatabaseRecord) f) {
-    var tab = _tables['Participants'];
+    var tab = _tables['Participants'] ;
     if (tab != null) {
       return tab.search(f) as List<Participant>;
     } else {
@@ -1274,16 +1384,13 @@ class Database {
     return _tables['Compres']!.all() as List<Compra>;
   }
 
-  Map<int, Decimal> compresByTerminal(){
-
+  Map<int, Decimal> compresByTerminal() {
     var result = Map<int, Decimal>();
     var ordered = allCompres();
 
-
     ordered.forEach((compra) {
-
       var producte = findProducte(compra.idProducte);
-      if (producte == null){
+      if (producte == null) {
         return;
       }
 
@@ -1291,13 +1398,17 @@ class Database {
       var value = acum + producte.preu;
 
       result[compra.terminal] = value;
-     });
+    });
 
     return result;
   }
 
   List<Modalitat> allModalitats() {
     return _tables['Modalitats']!.all() as List<Modalitat>;
+  }
+
+  List<Texte> allTextes() {
+    return _tables['Textes']!.all() as List<Texte>;
   }
 
   Producte? findProducteServei(Servei servei) {
@@ -1313,5 +1424,31 @@ class Database {
 
   int countCompres() {
     return _tables['Compres']!.count();
+  }
+
+  String? traduccio(int id_taula, int id_item, String idioma) {
+
+    var tab = _tables['Textes'] as t.Table<Texte>;
+    if (tab != null) {
+      var s =  tab.search(
+              (d) {
+            var d1 = d as Texte;
+            return d1.id_taula == id_taula &&
+                d1.id_item == id_item &&
+                d1.idioma == idioma;
+          }
+        );
+
+          var l = s.map((e) => e.valor).toList();
+      if (l.isEmpty) {
+        return null;
+      } else {
+        return l[0];
+      }
+
+    } else {
+      return null;
+    }
+
   }
 }

@@ -24,6 +24,7 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
   String serverAddress = "";
   String appPath = "";
   Protocol protocol = Protocol.http;
+
   int terminal = 1;
 
 
