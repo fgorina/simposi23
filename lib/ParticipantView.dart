@@ -337,13 +337,22 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
 
     icons.add(IconButton(
       onPressed: () {
-        if (d.currentParticipant != null) {
-          d.currentParticipant!.sendPdf(test: true);
-        }
+        setState(() {
+          if (d.currentParticipant != null) {
+            d.currentParticipant!.sendPdf(test: false);
+          }
+        });
+
 
       },
       icon: Icon(CupertinoIcons.mail),
     ));
+    if (d.currentParticipant != null) {
+      if (d.currentParticipant!.pagat){
+        icons.add(Icon(CupertinoIcons.check_mark));
+    }
+   }
+
 
     icons.add(IconButton(
       onPressed: () {

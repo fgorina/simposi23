@@ -44,7 +44,8 @@ enum TipusOperacions {
   comprar,
   compres,
   modalitats,
-  textes
+  textes,
+  enviat
 }
 
 Map<TipusOperacions, String> stringOperacio = {
@@ -57,6 +58,7 @@ Map<TipusOperacions, String> stringOperacio = {
   TipusOperacions.compres: "compres",
   TipusOperacions.modalitats: "modalitats",
   TipusOperacions.textes: "textes",
+  TipusOperacions.enviat: "enviat",
 };
 
 Map<String, TipusOperacions> operacioString =
@@ -144,7 +146,7 @@ class Database {
   String smtpUser = "newsfromsymposium@pagaia.cat";
   String smtpPassword = "qrPERpacogorina";
   String fromEmail = "newsfromsymposium@pagaia.cat";
-  String bccEmail = "fgorina@mac.com";
+  String bccEmail = "tresoreria@pagaia.cat";
 
 
   Database._constructor() {
@@ -394,6 +396,13 @@ class Database {
                 (List<String> response) {
               _updateModalitats(response, clear: op.idValue().isEmpty);
             });
+            break;
+
+          case TipusOperacions.enviat:
+            await server.getData(stringOperacio[TipusOperacions.enviat]!,
+                op.idValue(), terminal, (List<String> response) {
+                  _updateParticipants(response, clear: op.idValue().isEmpty);
+                });
             break;
 
           default:
@@ -788,6 +797,40 @@ class Database {
       addToBacklog(Operacio(TipusOperacions.registrar, id));
     }
   }
+
+  Future enviatParticipant(int id) async {
+    Participant? participant = findParticipant(id);
+    if (participant == null) {
+      notifySubscriptors(
+          "ERROR",
+          "El participant amb id $id no hi es a la base de dades.",
+          "registrar");
+      return;
+    }
+
+    try {
+      await server.getData(stringOperacio[TipusOperacions.enviat]!,
+          id.toString(), terminal, _updateParticipants);
+      _procesaBacklog();
+    } on http.ClientException catch (e) {
+      // Proces Local
+
+      if (participant.pagat) {
+        notifySubscriptors(
+            "ERROR", "{$participant.name} ja ha  sigut mailejat!", "enviat");
+
+        return;
+      }
+      participant.pagat = true;
+      saveData();
+      notifySubscriptors("OK", "", "enviat");
+
+      lastServerError = e.toString();
+      notifySubscriptors("OK", lastServerError, "");
+      addToBacklog(Operacio(TipusOperacions.enviat, id));
+    }
+  }
+
 
   Future consumir(int id) async {
     // Some checks so things are fast although the conexion is not available:

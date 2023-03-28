@@ -44,7 +44,7 @@ class Contractacio implements DatabaseRecord{
 
     List<Contractacio> contractacions = [];
     int participantId = int.parse(fields[0]);
-    for (int i = 8; i < fields.length; i++){
+    for (int i = 8; i < fields.length-1; i++){
        int serveiId = i - 7;
        int estat = int.parse(fields[i]);
 

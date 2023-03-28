@@ -35,6 +35,7 @@ class _SendEmailViewState extends State<SendEmailView> {
   int itemToSend = 0;
 
   List<Participant> targets = [];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,11 +78,12 @@ class _SendEmailViewState extends State<SendEmailView> {
             ]),
             Spacer(),
             sending && targets.length > 0 && targets.length > itemToSend
-                ?Container(
-                width: 250, child: LinearProgressIndicator(
-                    value: itemToSend / targets.length,
-                    semanticsLabel: 'Linear progress indicator',
-                  ))
+                ? Container(
+                    width: 250,
+                    child: LinearProgressIndicator(
+                      value: itemToSend / targets.length,
+                      semanticsLabel: 'Linear progress indicator',
+                    ))
                 : SizedBox.shrink(),
             Spacer(),
             CupertinoButton(
@@ -91,23 +93,25 @@ class _SendEmailViewState extends State<SendEmailView> {
                 ),
                 borderRadius: BorderRadius.circular(10),
                 color: Colors.blue,
-                onPressed: () {
+                onPressed: () async {
                   targets = db.searchParticipants((p) {
                     var pr = p as Participant;
                     var m = p.modalitat;
-                    return selected[m];
+                    return selected[m] && !pr.pagat;
                   });
                   sending = true;
                   itemToSend = 0;
-                  final  server = gmail(db.smtpUser, db.smtpPassword);
+                  final server = gmail(db.smtpUser, db.smtpPassword);
 
-                  targets.forEach((element) async {
-                      await element.sendPdf(server: server);
+                  for (int i = 0; i < targets.length; i++) {
+                    var element = targets[i];
+                    await element.sendPdf(server: server, test: false);
                     setState(() {
                       itemToSend += 1;
                       print("Enviat missatge per a  ${element.name}");
                     });
-                  });
+                    //await Future.delayed(const Duration(milliseconds: 500), () {});
+                  }
                 }),
             Spacer()
           ],

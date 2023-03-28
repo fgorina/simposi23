@@ -35,6 +35,7 @@ class Participant  implements DatabaseRecord{
   bool pagat;
 
 
+
   Participant(  this.id,  this.name, this.modalitat,  this.dataModificat, this.email, this.idioma, this.samarreta,  this.registrat, this.pagat);
 
   List<Contractacio> contractacions(){
@@ -69,15 +70,20 @@ class Participant  implements DatabaseRecord{
     String email = fields[4];
     String idioma = fields[5];
     String samarreta = fields[6];
-
+    bool enviat = false;
+    if (fields.length >= 26) {
+      enviat =  fields[25] != "0";
+    }else {
+      enviat =  fields[8] == 1;
+    }
 
     bool registrat = int.parse(fields[7]) == 1;
 
-    return Participant(codi, nom, modalitat,dataModificat, email, idioma, samarreta, registrat, true);
+    return Participant(codi, nom, modalitat,dataModificat, email, idioma, samarreta, registrat, enviat);
   }
 
   String toCSV(){
-    return  "$id;$name;$modalitat;$dataModificat;$email;$idioma;$samarreta;${registrat?1:0}";
+    return  "$id;$name;$modalitat;$dataModificat;$email;$idioma;$samarreta;${registrat?1:0};${pagat?1:0}";
   }
 
   // Special send routine for mails
@@ -88,7 +94,7 @@ Future sendPdf({SmtpServer? server =  null, bool test = true}) async {
       List<int>.from(pdf),
     );
 
-    var attachment = StreamAttachment(stream, "application/pdf", fileName:"Your Id");
+    var attachment = StreamAttachment(stream, "application/pdf", fileName: name + ".pdf");
     attachment.location = Location.attachment;
 
 
@@ -109,9 +115,10 @@ Future sendPdf({SmtpServer? server =  null, bool test = true}) async {
 
     try {
       final sendReport = await send(message, theServer);
+      Database.shared.enviatParticipant(this.id);
       print("Send message to $name at $email");
     }on MailerException catch (e) {
-      print('Message not sent.');
+      print('Message not sent.' + e.message);
       for (var p in e.problems) {
         print('Problem: ${p.code}: ${p.msg}');
       }
@@ -119,12 +126,10 @@ Future sendPdf({SmtpServer? server =  null, bool test = true}) async {
 
   }
 
-
-
   // PDF Routines
 
   Future<pw.Document> toPdf() async {
-    final logo = await imageFromAssetBundle('assets/icon/icon.png');
+    final logo = await imageFromAssetBundle('assets/logo.png');
 
     final pdf = pw.Document();
 
@@ -156,7 +161,7 @@ Future sendPdf({SmtpServer? server =  null, bool test = true}) async {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Image(logo),
+              pw.Image(logo, width: 60),
               pw.Column(
                 children: [
                   pw.Text("IX Simpòsium Internacional",
