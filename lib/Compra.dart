@@ -13,7 +13,7 @@ class Compra implements DatabaseRecord{
 
   @override
   bool isEqual(DatabaseRecord r){
-    if (this.runtimeType != r.runtimeType){
+    if (runtimeType != r.runtimeType){
       return false;
     }
     else{

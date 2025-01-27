@@ -355,10 +355,10 @@ header("Access-Control-Allow-Origin: *" );
 header("Access-Control-Allow-Methods: GET");
 
 // Main function. No s'ha de tocar
-$db_host = 'localhost';
-$db_user = 'fgorina';
-$db_password = 'axz93klm';
-$db_db = 'simposi23';
+$db_host = 'tb-be04-linweb080.srv.teamblue-ops.net';
+$db_user = 'pagaia_pagaiaPacoG';
+$db_password = 'PacoG2025';
+$db_db = 'pagaia_simpo2024ok';
 $db_port = 8889;
 
 $secret = "asdjadskfjdaslkfj";

@@ -22,7 +22,7 @@ class Server {
   void setAddress(Protocol protocol, String host, String path){
     this.protocol = protocol;
     this.host = host;
-    this.url = path;
+    url = path;
   }
   Future<List<String>> doQuery(Map<String, String> parameters, {String method = 'GET'}) async{
 
@@ -105,7 +105,7 @@ class Server {
 
     var answer = await doQuery(query, method : "DELETE");
     await done(answer);
-    print("Delete ${answer}");
+    print("Delete $answer");
 
   }
 

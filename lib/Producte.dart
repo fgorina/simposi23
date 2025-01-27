@@ -1,23 +1,25 @@
-import 'package:flutter/material.dart';
 import 'DatabaseRecord.dart';
 import 'package:decimal/decimal.dart';
 
 class Producte  implements DatabaseRecord {
+  @override
   int id;
+  @override
   String name;
   Decimal preu;
 
   Producte(this.id, this.name, this.preu);
 
+  @override
   bool isEqual(DatabaseRecord r){
-    if (this.runtimeType != r.runtimeType){
+    if (runtimeType != r.runtimeType){
       return false;
     }
     else{
       var r1 = r as Producte;
-      return this.id == r.id
-          && this.name == r.name
-          && this.preu == r1.preu;
+      return id == r.id
+          && name == r.name
+          && preu == r1.preu;
     }
   }
 
@@ -31,7 +33,7 @@ class Producte  implements DatabaseRecord {
   }
 
   String toCSV(){
-    return  "$id;$name;${preu}";
+    return  "$id;$name;$preu";
   }
 
 

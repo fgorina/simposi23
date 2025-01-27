@@ -8,7 +8,9 @@ import 'Table.dart' as t;
 
 class Contractacio implements DatabaseRecord{
 
+  @override
   int id; // Es codi id_participant * 100 + id_servei
+  @override
   String name;
   int participantId;
   int  serveiId;
@@ -24,16 +26,16 @@ class Contractacio implements DatabaseRecord{
 
   @override
   bool isEqual(DatabaseRecord r){
-    if (this.runtimeType != r.runtimeType){
+    if (runtimeType != r.runtimeType){
       return false;
     }
     else{
       var r1 = r as Contractacio;
-      return this.id == r.id
-          && this.name == r.name
-          && this.participantId == r1.participantId
-          && this.serveiId == r1.serveiId
-          && this.estat == r1.estat;
+      return id == r.id
+          && name == r.name
+          && participantId == r1.participantId
+          && serveiId == r1.serveiId
+          && estat == r1.estat;
 
     }
   }

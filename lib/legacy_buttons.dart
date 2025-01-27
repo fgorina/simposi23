@@ -35,9 +35,7 @@ class LegacyFlatButton extends MaterialButton {
     required Widget child,
     double? height,
     double? minWidth,
-  })  : assert(clipBehavior != null),
-        assert(autofocus != null),
-        super(
+  })  : super(
         key: key,
         height: height,
         minWidth: minWidth,
@@ -111,7 +109,7 @@ class LegacyFlatButton extends MaterialButton {
       onHighlightChanged: onHighlightChanged,
       mouseCursor: mouseCursor,
       fillColor: buttonTheme.getFillColor(this),
-      textStyle: theme.textTheme.button!
+      textStyle: theme.textTheme.labelLarge!
           .copyWith(color: buttonTheme.getTextColor(this)),
       focusColor: buttonTheme.getFocusColor(this),
       hoverColor: buttonTheme.getHoverColor(this),
@@ -144,7 +142,7 @@ class LegacyFlatButton extends MaterialButton {
 /// This class only exists to give LegacyFlatButtons created with [LegacyFlatButton.icon]
 /// a distinct class for the sake of [ButtonTheme]. It can not be instantiated.
 class _LegacyFlatButtonWithIcon extends LegacyFlatButton
-    with MaterialButtonWithIconMixin {
+    {
   _LegacyFlatButtonWithIcon({
     Key? key,
     required VoidCallback? onPressed,
@@ -171,11 +169,7 @@ class _LegacyFlatButtonWithIcon extends LegacyFlatButton
     required Widget label,
     double? minWidth,
     double? height,
-  })  : assert(icon != null),
-        assert(label != null),
-        assert(clipBehavior != null),
-        assert(autofocus != null),
-        super(
+  })  : super(
         key: key,
         onPressed: onPressed,
         onLongPress: onLongPress,
@@ -263,8 +257,6 @@ class LegacyOutlineButton extends MaterialButton {
     MaterialTapTargetSize? materialTapTargetSize,
     Widget? child,
   })  : assert(highlightElevation == null || highlightElevation >= 0.0),
-        assert(clipBehavior != null),
-        assert(autofocus != null),
         super(
         key: key,
         onPressed: onPressed,
@@ -351,7 +343,7 @@ class LegacyOutlineButton extends MaterialButton {
   /// If null the default border's style is [BorderStyle.solid], its
   /// [BorderSide.width] is 1.0, and its color is a light shade of grey.
   ///
-  /// If [BorderSide.color] is a [MaterialStateProperty<Color>], [MaterialStateProperty.resolve]
+  /// If [BorderSide.color] is a [MaterialStateProperty<Color>], [WidgetStateProperty.resolve]
   /// is used in all states and both [highlightedBorderColor] and [disabledBorderColor]
   /// are ignored.
   final BorderSide? borderSide;
@@ -406,7 +398,7 @@ class LegacyOutlineButton extends MaterialButton {
 // This class only exists to give LegacyOutlineButtons created with LegacyOutlineButton.icon
 // a distinct class for the sake of ButtonTheme. It can not be instantiated.
 class _LegacyOutlineButtonWithIcon extends LegacyOutlineButton
-    with MaterialButtonWithIconMixin {
+     {
   _LegacyOutlineButtonWithIcon({
     Key? key,
     required VoidCallback? onPressed,
@@ -434,10 +426,6 @@ class _LegacyOutlineButtonWithIcon extends LegacyOutlineButton
     required Widget icon,
     required Widget label,
   })  : assert(highlightElevation == null || highlightElevation >= 0.0),
-        assert(clipBehavior != null),
-        assert(autofocus != null),
-        assert(icon != null),
-        assert(label != null),
         super(
         key: key,
         onPressed: onPressed,
@@ -500,10 +488,7 @@ class _LegacyOutlineButton extends StatefulWidget {
     this.autofocus = false,
     this.child,
     this.materialTapTargetSize,
-  })  : assert(highlightElevation != null && highlightElevation >= 0.0),
-        assert(highlightedBorderColor != null),
-        assert(clipBehavior != null),
-        assert(autofocus != null),
+  })  : assert(highlightElevation >= 0.0),
         super(key: key);
 
   final VoidCallback? onPressed;
@@ -588,10 +573,11 @@ class _LegacyOutlineButtonState extends State<_LegacyOutlineButton>
     if (_pressed == value) return;
     setState(() {
       _pressed = value;
-      if (value)
+      if (value) {
         _controller.forward();
-      else
+      } else {
         _controller.reverse();
+      }
     });
   }
 
@@ -602,8 +588,9 @@ class _LegacyOutlineButtonState extends State<_LegacyOutlineButton>
   }
 
   Color _getFillColor() {
-    if (widget.highlightElevation == null || widget.highlightElevation == 0.0)
+    if (widget.highlightElevation == 0.0) {
       return Colors.transparent;
+    }
     final Color color = widget.color ?? Theme.of(context).canvasColor;
     final Tween<Color?> colorTween = ColorTween(
       begin: color.withAlpha(0x00),
@@ -615,8 +602,9 @@ class _LegacyOutlineButtonState extends State<_LegacyOutlineButton>
   Color? get _outlineColor {
     // If outline color is a `MaterialStateProperty`, it will be used in all
     // states, otherwise we determine the outline color in the current state.
-    if (widget.borderSide?.color is MaterialStateProperty<Color?>)
+    if (widget.borderSide?.color is WidgetStateProperty<Color?>) {
       return widget.borderSide!.color;
+    }
     if (!widget.enabled) return widget.disabledBorderColor;
     if (_pressed) return widget.highlightedBorderColor;
     return widget.borderSide?.color;
@@ -635,8 +623,9 @@ class _LegacyOutlineButtonState extends State<_LegacyOutlineButton>
   }
 
   double _getHighlightElevation() {
-    if (widget.highlightElevation == null || widget.highlightElevation == 0.0)
+    if (widget.highlightElevation == 0.0) {
       return 0.0;
+    }
     return Tween<double>(
       begin: 0.0,
       end: widget.highlightElevation,
@@ -689,12 +678,11 @@ class _LegacyOutlineButtonState extends State<_LegacyOutlineButton>
 // Render the button's outline border using using the LegacyOutlineButton's
 // border parameters and the button or buttonTheme's shape.
 class _OutlineBorder extends ShapeBorder
-    implements MaterialStateProperty<ShapeBorder> {
+    implements WidgetStateProperty<ShapeBorder> {
   const _OutlineBorder({
     required this.shape,
     required this.side,
-  })  : assert(shape != null),
-        assert(side != null);
+  });
 
   final ShapeBorder shape;
   final BorderSide side;
@@ -714,7 +702,6 @@ class _OutlineBorder extends ShapeBorder
 
   @override
   ShapeBorder? lerpFrom(ShapeBorder? a, double t) {
-    assert(t != null);
     if (a is _OutlineBorder) {
       return _OutlineBorder(
         side: BorderSide.lerp(a.side, side, t),
@@ -726,7 +713,6 @@ class _OutlineBorder extends ShapeBorder
 
   @override
   ShapeBorder? lerpTo(ShapeBorder? b, double t) {
-    assert(t != null);
     if (b is _OutlineBorder) {
       return _OutlineBorder(
         side: BorderSide.lerp(side, b.side, t),
@@ -768,14 +754,14 @@ class _OutlineBorder extends ShapeBorder
   }
 
   @override
-  int get hashCode => hashValues(side, shape);
+  int get hashCode => Object.hash(side, shape);
 
   @override
-  ShapeBorder resolve(Set<MaterialState> states) {
+  ShapeBorder resolve(Set<WidgetState> states) {
     return _OutlineBorder(
       shape: shape,
       side: side.copyWith(
-          color: MaterialStateProperty.resolveAs<Color>(side.color, states)),
+          color: WidgetStateProperty.resolveAs<Color>(side.color, states)),
     );
   }
 }
@@ -820,13 +806,11 @@ class LegacyRaisedButton extends MaterialButton {
     MaterialTapTargetSize? materialTapTargetSize,
     Duration? animationDuration,
     Widget? child,
-  })  : assert(autofocus != null),
-        assert(elevation == null || elevation >= 0.0),
+  })  : assert(elevation == null || elevation >= 0.0),
         assert(focusElevation == null || focusElevation >= 0.0),
         assert(hoverElevation == null || hoverElevation >= 0.0),
         assert(highlightElevation == null || highlightElevation >= 0.0),
         assert(disabledElevation == null || disabledElevation >= 0.0),
-        assert(clipBehavior != null),
         super(
         key: key,
         onPressed: onPressed,
@@ -909,7 +893,7 @@ class LegacyRaisedButton extends MaterialButton {
       mouseCursor: mouseCursor,
       clipBehavior: clipBehavior,
       fillColor: buttonTheme.getFillColor(this),
-      textStyle: theme.textTheme.button!
+      textStyle: theme.textTheme.labelLarge!
           .copyWith(color: buttonTheme.getTextColor(this)),
       focusColor: buttonTheme.getFocusColor(this),
       hoverColor: buttonTheme.getHoverColor(this),
@@ -955,7 +939,7 @@ class LegacyRaisedButton extends MaterialButton {
 /// This class only exists to give LegacyRaisedButtons created with [LegacyRaisedButton.icon]
 /// a distinct class for the sake of [ButtonTheme]. It can not be instantiated.
 class _LegacyRaisedButtonWithIcon extends LegacyRaisedButton
-    with MaterialButtonWithIconMixin {
+    {
   _LegacyRaisedButtonWithIcon({
     Key? key,
     required VoidCallback? onPressed,
@@ -987,10 +971,6 @@ class _LegacyRaisedButtonWithIcon extends LegacyRaisedButton
   })  : assert(elevation == null || elevation >= 0.0),
         assert(highlightElevation == null || highlightElevation >= 0.0),
         assert(disabledElevation == null || disabledElevation >= 0.0),
-        assert(clipBehavior != null),
-        assert(icon != null),
-        assert(label != null),
-        assert(autofocus != null),
         super(
         key: key,
         onPressed: onPressed,

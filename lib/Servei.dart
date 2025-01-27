@@ -9,7 +9,9 @@ List<Color> colorsProductes1 = [Colors.pink, Colors.teal, Colors.amber, Colors.b
 class Servei  implements DatabaseRecord{
 
 
+  @override
   int id;
+  @override
   String name;
   DateTimeRange valid;
   String field;
@@ -18,16 +20,16 @@ class Servei  implements DatabaseRecord{
 
   @override
   bool isEqual(DatabaseRecord r){
-    if (this.runtimeType != r.runtimeType){
+    if (runtimeType != r.runtimeType){
       return false;
     }
     else{
       var r1 = r as Servei;
-      return this.id == r.id
-          && this.name == r.name
-          && this.valid == r1.valid
-      && this.field == r1.field
-        && this.idProducte == r1.idProducte;
+      return id == r.id
+          && name == r.name
+          && valid == r1.valid
+      && field == r1.field
+        && idProducte == r1.idProducte;
     }
   }
 

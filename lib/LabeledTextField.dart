@@ -7,12 +7,12 @@ Widget labeledText(String name, String value) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Container(
+      SizedBox(
         width: 150,
         child: Text(name,),
       ),
-      Spacer(),
-      Container(
+      const Spacer(),
+      SizedBox(
         width: 150,
         child: Text(value, textAlign: TextAlign.right),
       ),
@@ -26,19 +26,19 @@ Widget labeledTextField(String name, String value, Function(String) changed, {bo
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Container(
+      SizedBox(
         width: 150,
         child: Text(name,),
        ),
-      Spacer(),
-      Container(
+      const Spacer(),
+      SizedBox(
         width: 150,
         child: TextFormField(
           enabled: enabled,
           controller: TextEditingController(text: value),
           onFieldSubmitted: changed,
           textAlign: TextAlign.right,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             isDense: true,
             contentPadding: EdgeInsets.all(10),
             border: OutlineInputBorder(),
@@ -55,19 +55,19 @@ Widget labeled2TextField(String name, String value1, String value2,
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Container(
+      SizedBox(
         width: 150,
         child: Text(name,),
       ),
-      Spacer(),
-      Container(
+      const Spacer(),
+      SizedBox(
         width: 100,
         child: TextFormField(
           enabled: enabled,
           controller: TextEditingController(text: value1),
           onFieldSubmitted: changed1,
           textAlign: TextAlign.right,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             isDense: true,
             contentPadding: EdgeInsets.all(10),
             border: OutlineInputBorder(),
@@ -77,14 +77,14 @@ Widget labeled2TextField(String name, String value1, String value2,
       Container(
         width: 10,
       ),
-      Container(
+      SizedBox(
         width: 100,
         child: TextFormField(
           enabled: enabled,
           controller: TextEditingController(text: value2),
           onFieldSubmitted: changed2,
           textAlign: TextAlign.right,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             isDense: true,
             contentPadding: EdgeInsets.all(10),
             border: OutlineInputBorder(),
@@ -100,17 +100,17 @@ Widget labeledNumericField(
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-    Container(
+    SizedBox(
     width: 150,
     child:
       Text(name,),
     ),
-      Spacer(),
-      Container(
+      const Spacer(),
+      SizedBox(
         width: 100,
         child: TextFormField(
             enabled: enabled,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               isDense: true,
               contentPadding: EdgeInsets.all(10),
               border: OutlineInputBorder(),
@@ -129,12 +129,12 @@ Widget labeledNumericFieldButton(String name, String value, String buttonText,
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Container(
+      SizedBox(
         width: 150,
         child: Text(name,),
       ),
-      Spacer(),
-      Container(
+      const Spacer(),
+      SizedBox(
         width: 100,
         child: TextFormField(
           enabled: enabled,
@@ -142,7 +142,7 @@ Widget labeledNumericFieldButton(String name, String value, String buttonText,
           keyboardType: TextInputType.number,
           onFieldSubmitted: changed,
           textAlign: TextAlign.right,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             isDense: true,
             contentPadding: EdgeInsets.all(10),
             border: OutlineInputBorder(),
@@ -150,7 +150,7 @@ Widget labeledNumericFieldButton(String name, String value, String buttonText,
         ),
       ),
       Container(width: 10),
-      Container(
+      SizedBox(
         width: 100,
         child: TextButton(
           onPressed: enabled ? pushed : null,
@@ -166,12 +166,12 @@ Widget labeled2NumericField(String name, String value1, String value2,
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Container(
+      SizedBox(
         width: 150,
         child: Text(name,),
       ),
-      Spacer(),
-      Container(
+      const Spacer(),
+      SizedBox(
         width: 100,
         child: visible ? TextFormField(
           enabled: enabled,
@@ -179,17 +179,17 @@ Widget labeled2NumericField(String name, String value1, String value2,
           keyboardType: TextInputType.number,
           onFieldSubmitted: changed1,
           textAlign: TextAlign.right,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             isDense: true,
             contentPadding: EdgeInsets.all(10),
             border: OutlineInputBorder(),
           ),
-        ) : Text(" "),
+        ) : const Text(" "),
       ),
       Container(
         width: 10,
       ),
-      Container(
+      SizedBox(
         width: 100,
         child: visible1 ? TextFormField(
           enabled: enabled1,
@@ -197,12 +197,12 @@ Widget labeled2NumericField(String name, String value1, String value2,
           keyboardType: TextInputType.number,
           onFieldSubmitted: changed2,
           textAlign: TextAlign.right,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             isDense: true,
             contentPadding: EdgeInsets.all(10),
             border: OutlineInputBorder(),
           ),
-        ) : Text(" "),
+        ) : const Text(" "),
       ),
     ],
   );
@@ -217,11 +217,11 @@ Widget labeled2PopupField(String name, int index1, int index2, List<int> values,
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Container(
+      SizedBox(
         width: 150,
         child: Text(name,),
       ),
-      Spacer(),
+      const Spacer(),
 
 
         Container(
@@ -237,7 +237,7 @@ Widget labeled2PopupField(String name, int index1, int index2, List<int> values,
             child: DropdownButton<int>(value: index1, icon:const Icon(Icons.arrow_downward),
             onChanged:  changed1,
             items: values.map((entry) { return DropdownMenuItem<int>(value: entry, child: Text(entry.toString()));} ).toList()),
-          )  : Text(" "),
+          )  : const Text(" "),
         ),
 
       Container(
@@ -256,7 +256,7 @@ Widget labeled2PopupField(String name, int index1, int index2, List<int> values,
           child: DropdownButton<int>(value: index2, icon:const Icon(Icons.arrow_downward),
               onChanged:  changed2,
               items: values.map((entry) { return DropdownMenuItem<int>(value: entry, child: Text(entry.toString()));} ).toList()),
-        )  : Text(" "),
+        )  : const Text(" "),
       ),
 
     ],
@@ -268,11 +268,11 @@ Widget labeled1PopupField(String name, int index1,  List<int> values,
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Container(
+      SizedBox(
         width: 150,
         child: Text(name,),
       ),
-      Spacer(),
+      const Spacer(),
 
 
       Container(
@@ -288,7 +288,7 @@ Widget labeled1PopupField(String name, int index1,  List<int> values,
           child: DropdownButton<int>(value: index1, icon:const Icon(Icons.arrow_downward),
               onChanged:  changed1,
               items: values.map((entry) { return DropdownMenuItem<int>(value: entry, child: Text(entry.toString()));} ).toList()),
-        )  : Text(" "),
+        )  : const Text(" "),
       ),
 
 
@@ -301,11 +301,11 @@ Widget labeledStringPopupField(String name, int index1,  List<String> values,
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
-      Container(
+      SizedBox(
         width: 150,
         child: Text(name,),
       ),
-      Spacer(),
+      const Spacer(),
 
 
       Container(
@@ -321,7 +321,7 @@ Widget labeledStringPopupField(String name, int index1,  List<String> values,
           child: DropdownButton<int>(value: index1, icon:const Icon(Icons.arrow_downward),
               onChanged:  changed1,
               items: values.asMap().entries.map((entry) { return DropdownMenuItem<int>(value: entry.key, child: Text(entry.value));} ).toList()),
-        )  : Text(" "),
+        )  : const Text(" "),
       ),
 
 

@@ -19,7 +19,7 @@ class RespostaWidget extends StatefulWidget {
   String status ="";
   String message = "";
 
-  RespostaWidget(this.participant, this.servei,  this.status, this.message);
+  RespostaWidget(this.participant, this.servei,  this.status, this.message, {super.key});
 
 
   @override
@@ -36,6 +36,7 @@ class _RespostaWidgetState extends State<RespostaWidget> {
 
   bool answered = false;
 
+  @override
   void initState() {
     super.initState();
     d.addSubscriptor(this);
@@ -43,6 +44,7 @@ class _RespostaWidgetState extends State<RespostaWidget> {
     d.consumir(id);
   }
 
+  @override
   void dispose() {
     d.removeSubscriptors(this);
     super.dispose();
@@ -97,15 +99,15 @@ class _RespostaWidgetState extends State<RespostaWidget> {
       return ElevatedButton(onPressed: (){
         registrar(widget.participant);
       },
-          child: Text("Registrar", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           style: ElevatedButton.styleFrom(
-              primary: Colors.white30,
+              backgroundColor: Colors.white30,
               shape:
               RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18.0),
-                  side: BorderSide(color: Colors.black)
+                  side: const BorderSide(color: Colors.black)
               )
-          ));
+          ),
+          child: const Text("Registrar", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)));
     }
   // No comprat. Podem comprar
 
@@ -113,20 +115,20 @@ class _RespostaWidgetState extends State<RespostaWidget> {
       return ElevatedButton(onPressed: () {
         comprar(widget.participant, widget.servei);
       },
-          child: Text("Comprar",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           style: ElevatedButton.styleFrom(
-              primary: Colors.white30,
+              backgroundColor: Colors.white30,
               shape:
               RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18.0),
-                  side: BorderSide(color: Colors.black)
+                  side: const BorderSide(color: Colors.black)
               )
-          ));
+          ),
+          child: const Text("Comprar",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)));
     }
     // Tot OK
 
-      return Text("");
+      return const Text("");
 
   }
 
@@ -150,27 +152,27 @@ class _RespostaWidgetState extends State<RespostaWidget> {
     }
 
     List<Widget> widgets = [
-      Text(widget.participant.name, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Colors.black)),
-      Spacer(),
+      Text(widget.participant.name, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Colors.black)),
+      const Spacer(),
       widget.status == "OK" ? si : no,
-      Spacer(),
-      Text(widget.status == "OK" ? "" : widget.message, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
-      Spacer(),
+      const Spacer(),
+      Text(widget.status == "OK" ? "" : widget.message, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
+      const Spacer(),
       actionWidget() ,
-      Spacer(),
+      const Spacer(),
     ];
 
     List<Widget> waitingWidgets = [
-      Text(widget.participant.name, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Colors.black)),
-      Spacer(),
-      Container(width: 224, height: 224,
+      Text(widget.participant.name, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 30, color: Colors.black)),
+      const Spacer(),
+      const SizedBox(width: 224, height: 224,
         child: CupertinoActivityIndicator(animating: true, radius: 30),
       ),
-      Spacer(),
-      Text(widget.status == "OK" ? "" : widget.message, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
-      Spacer(),
+      const Spacer(),
+      Text(widget.status == "OK" ? "" : widget.message, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
+      const Spacer(),
       actionWidget() ,
-      Spacer(),
+      const Spacer(),
     ];
 
 
@@ -185,9 +187,9 @@ class _RespostaWidgetState extends State<RespostaWidget> {
           actions:  icons,
 
         ),
-        body: Consumer<ScreenHeight>(builder: (context, _res, child) {
+        body: Consumer<ScreenHeight>(builder: (context, res, child) {
           return SafeArea(
-            minimum: EdgeInsets.only(
+            minimum: const EdgeInsets.only(
                 left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
             child: Center(
               child: Column(

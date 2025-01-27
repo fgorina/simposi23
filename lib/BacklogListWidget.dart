@@ -6,6 +6,8 @@ import 'Alerts.dart';
 
 
 class BacklogListWidget extends StatefulWidget {
+  const BacklogListWidget({super.key});
+
   @override
   _BacklogListWidgetState createState() => _BacklogListWidgetState();
 }
@@ -15,23 +17,25 @@ class _BacklogListWidgetState extends State<BacklogListWidget> {
 
   Database d = Database.shared;
 
+  @override
   void initState() {
     super.initState();
     d.addSubscriptor(this);
   }
 
+  @override
   void dispose() {
     d.removeSubscriptors(this);
     super.dispose();
   }
 
   void modelUpdated(String status, String message, String op) {
-    final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
+    final isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
-    if (status != "OK" && _isTopOfNavigationStack) {
+    if (status != "OK" && isTopOfNavigationStack) {
       //Database.displayAlert(context, "Error in List", message);
     }
-    if (_isTopOfNavigationStack) {
+    if (isTopOfNavigationStack) {
       setState(() {
 
       });
@@ -104,12 +108,12 @@ class _BacklogListWidgetState extends State<BacklogListWidget> {
       smallSize: 500.0,
       child: Scaffold(
         appBar: AppBar(
-          title: Text("BackLog Op's"),
+          title: const Text("BackLog Op's"),
           actions: icons,
         ),
-        body: Consumer<ScreenHeight>(builder: (context, _res, child) {
+        body: Consumer<ScreenHeight>(builder: (context, res, child) {
           return SafeArea(
-            minimum: EdgeInsets.only(
+            minimum: const EdgeInsets.only(
                 left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
             child: ListView.builder(
               itemCount: d.backLogCount(),
@@ -117,7 +121,7 @@ class _BacklogListWidgetState extends State<BacklogListWidget> {
                 return ListTile(
                   tileColor : [Colors.black12, Colors.white][index % 2],
                   title: Text(
-                    d.allBacklog()[index].op.toString() + "(" + d.allBacklog()[index].idValue() + ")" ,
+                    "${d.allBacklog()[index].op}(${d.allBacklog()[index].idValue()})" ,
                   ),
                   subtitle: Text(
                       idToString(d.allBacklog()[index]),

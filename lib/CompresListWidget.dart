@@ -15,6 +15,8 @@ import 'package:share_plus/share_plus.dart';
 import 'Alerts.dart';
 
 class CompresListWidget extends StatefulWidget {
+  const CompresListWidget({super.key});
+
   @override
   _CompresListWidgetState createState() => _CompresListWidgetState();
 }
@@ -31,6 +33,7 @@ class _CompresListWidgetState extends State<CompresListWidget> {
 
   bool resum = false;
 
+  @override
   void initState() {
     super.initState();
     d.addSubscriptor(this);
@@ -45,21 +48,22 @@ class _CompresListWidgetState extends State<CompresListWidget> {
 
   }
 
+  @override
   void dispose() {
     d.removeSubscriptors(this);
     super.dispose();
   }
 
   void modelUpdated(String status, String message, String op) {
-    final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
+    final isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
-    if (status != "OK" && _isTopOfNavigationStack) {
+    if (status != "OK" && isTopOfNavigationStack) {
       //Database.displayAlert(context, "Error in Compres List", message);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
     }
-    if (_isTopOfNavigationStack) {
+    if (isTopOfNavigationStack) {
       setState(() {
         compres = d.allCompres();
         compres.sort(
@@ -84,14 +88,14 @@ class _CompresListWidgetState extends State<CompresListWidget> {
     var file = File(path);
     await file.writeAsString(data, flush: true);
 
-    var result = await Share.shareFilesWithResult([path]);
+    var result = await Share.shareXFiles([XFile(path)]);
 
   }
 
   Widget resumWidget(int terminal, Decimal amount, int index){
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [Text("Terminal " + terminal.toString()), Text(amount.toString()),],
+      children: [Text("Terminal $terminal"), Text(amount.toString()),],
     );
 
 
@@ -103,15 +107,15 @@ class _CompresListWidgetState extends State<CompresListWidget> {
     String nomParticipant = participant?.name ?? "";
     Producte? producte = d.findProducte(compra.idProducte);
     String nomProducte = producte?.name ?? "";
-    String preu = (producte?.preu ?? Decimal.fromInt(0)).toString() + " €";
+    String preu = "${producte?.preu ?? Decimal.fromInt(0)} €";
 
     return ListTile(
       tileColor: colorsTerminals[compra.terminal % colorsTerminals.length],
       title: Row(children: [
-        Container(
+        SizedBox(
             width: screenWidth(context) - 110,
-            child: Text(formatter.format(compra.data) + " " + nomProducte)),
-        Container(
+            child: Text("${formatter.format(compra.data)} $nomProducte")),
+        SizedBox(
             width: 35,
             child: Text(
               preu,
@@ -180,27 +184,27 @@ class _CompresListWidgetState extends State<CompresListWidget> {
       smallSize: 500.0,
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Compres per Terminal"),
+          title: const Text("Compres per Terminal"),
           actions: icons,
         ),
-        body: Consumer<ScreenHeight>(builder: (context, _res, child) {
+        body: Consumer<ScreenHeight>(builder: (context, res, child) {
           return SafeArea(
-            minimum: EdgeInsets.only(
+            minimum: const EdgeInsets.only(
                 left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
             child: Column(children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Total", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  const Text("Total", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   Text(
-                    total.toString() + " € ",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    "$total € ",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     textAlign: TextAlign.end,
                   )
                 ],
               ),
               Container(height: 20),
-              Container(
+              SizedBox(
                 height: screenHeight(context) - 200,
 
                 child: Scrollbar(
@@ -211,7 +215,7 @@ class _CompresListWidgetState extends State<CompresListWidget> {
                     itemBuilder: (BuildContext context, int index) {
                       return resumWidget(keys[index], compresTerminal[keys[index]] ?? Decimal.zero, index);
                     },
-                    separatorBuilder: (context, index) {return Divider(color: Colors.white30,);},
+                    separatorBuilder: (context, index) {return const Divider(color: Colors.white30,);},
                     controller: controller,
                     shrinkWrap: true,
 
@@ -279,27 +283,27 @@ class _CompresListWidgetState extends State<CompresListWidget> {
       smallSize: 500.0,
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Compres"),
+          title: const Text("Compres"),
           actions: icons,
         ),
-        body: Consumer<ScreenHeight>(builder: (context, _res, child) {
+        body: Consumer<ScreenHeight>(builder: (context, res, child) {
           return SafeArea(
-            minimum: EdgeInsets.only(
+            minimum: const EdgeInsets.only(
                 left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
             child: Column(children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Total", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  const Text("Total", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
                   Text(
-                    total.toString() + " € ",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    "$total € ",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                     textAlign: TextAlign.end,
                   )
                 ],
               ),
               Container(height: 20),
-              Container(
+              SizedBox(
                 height: screenHeight(context) - 200,
 
                 child: Scrollbar(
@@ -310,7 +314,7 @@ class _CompresListWidgetState extends State<CompresListWidget> {
                     itemBuilder: (BuildContext context, int index) {
                       return compraWidget(compres[index], index);
                     },
-                    separatorBuilder: (context, index) {return Divider(color: Colors.white30,);},
+                    separatorBuilder: (context, index) {return const Divider(color: Colors.white30,);},
                     controller: controller,
                     shrinkWrap: true,
 

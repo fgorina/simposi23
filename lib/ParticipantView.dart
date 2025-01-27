@@ -31,6 +31,8 @@ List<pw.Widget> pdfStateIcons = [
 class ParticipantViewWidget extends StatefulWidget {
   final String title = "Participants";
 
+  const ParticipantViewWidget({super.key});
+
   @override
   _ParticipantViewWidgetState createState() => _ParticipantViewWidgetState();
 }
@@ -42,6 +44,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
 
   DateFormat df = DateFormat("dd/MM");
 
+  @override
   void initState() {
     super.initState();
     stateIcons = [
@@ -53,7 +56,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
         Icons.check_circle_outline,
         color: d.currentParticipant!.registrat ? Colors.green : Colors.pink,
       ),
-      Icon(
+      const Icon(
         Icons.check_circle,
         color: Colors.red,
       )
@@ -63,22 +66,23 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
     d.updateParticipant(d.currentParticipant!.id);
   }
 
+  @override
   void dispose() {
     d.removeSubscriptors(this);
     super.dispose();
   }
 
   void modelUpdated(String status, String message, String op) {
-    final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
+    final isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
-    if (status != "OK" && _isTopOfNavigationStack) {
+    if (status != "OK" && isTopOfNavigationStack) {
       //Database.displayAlert(context, "STOP", message);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
     }
 
-    if (_isTopOfNavigationStack) {
+    if (isTopOfNavigationStack) {
       setState(() {
         d.currentParticipant = d.findParticipant(d.currentParticipant!.id);
         d.currentContractacions = d.currentParticipant!.contractacions();
@@ -270,7 +274,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
   static Future sharePdf(Participant p) async {
     var pdf = await p.toPdf();
     await Printing.sharePdf(
-        bytes: await pdf.save(), filename: p.id.toString() + ".pdf");
+        bytes: await pdf.save(), filename: "${p.id}.pdf");
   }
 
   static Future printPdf(Participant p) async {
@@ -345,11 +349,11 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
 
 
       },
-      icon: Icon(CupertinoIcons.mail),
+      icon: const Icon(CupertinoIcons.mail),
     ));
     if (d.currentParticipant != null) {
       if (d.currentParticipant!.pagat){
-        icons.add(Icon(CupertinoIcons.check_mark));
+        icons.add(const Icon(CupertinoIcons.check_mark));
     }
    }
 
@@ -358,7 +362,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
       onPressed: () {
         printPdf(d.currentParticipant!);
       },
-      icon: Icon(CupertinoIcons.printer),
+      icon: const Icon(CupertinoIcons.printer),
     ));
 
     // Here to share means to create a pdf (Glups)
@@ -367,14 +371,14 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
         onPressed: () {
           sharePdf(d.currentParticipant!);
         },
-        icon: Icon(CupertinoIcons.share),
+        icon: const Icon(CupertinoIcons.share),
       ));
     } else {
       icons.add(IconButton(
         onPressed: () {
           sharePdf(d.currentParticipant!);
         },
-        icon: Icon(Icons.share),
+        icon: const Icon(Icons.share),
       ));
     }
 
@@ -394,30 +398,30 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
 
           actions: icons,
         ),
-        body: Consumer<ScreenHeight>(builder: (context, _res, child) {
+        body: Consumer<ScreenHeight>(builder: (context, res, child) {
           return SafeArea(
-            minimum: EdgeInsets.only(
+            minimum: const EdgeInsets.only(
                 left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
             child: Column(
               children: [
                 Text(modalitatName,
                     style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 Container(height: 10),
                 d.currentParticipant!.registrat
-                    ? Text("")
+                    ? const Text("")
                     : ElevatedButton(
                         onPressed: () {
                           registrar();
                         },
-                        child: Text("Registrar",
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
                         style: ElevatedButton.styleFrom(
-                            primary: Colors.pinkAccent,
+                            backgroundColor: Colors.pinkAccent,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18.0),
-                                side: BorderSide(color: Colors.black)))),
+                                side: const BorderSide(color: Colors.black))),
+                        child: const Text("Registrar",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold))),
 
                 /*labeledSwitch("Esmorzars", d.currentParticipant!.esmorzars ,  null, enabled: false),
                 labeledSwitch("Setmana Paleig", d.currentParticipant!.setmana,  null, enabled: false),
@@ -426,8 +430,8 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
                 Text("No Pagat", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.red)),
 
                  */
-                Text(""),
-                Container(
+                const Text(""),
+                SizedBox(
                   height: screenHeight(context) - 353,
                   child: Scrollbar(
                     thumbVisibility: true,
@@ -440,20 +444,20 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
                             d.currentParticipant!, d.allProductes()[index]);
                       },
                       separatorBuilder: (BuildContext context, int index) {
-                        return Divider(color: Colors.grey);
+                        return const Divider(color: Colors.grey);
                       },
                     ),
                   ),
                 ),
-                Spacer(),
-                Container(
+                const Spacer(),
+                SizedBox(
                   width: 100,
                   height: 100,
                   child: BarcodeWidget(
                       data: d.paticipantCSV(d.currentParticipant!),
                       barcode: Barcode.qrCode()),
                 ),
-                Spacer(),
+                const Spacer(),
               ],
             ),
           );

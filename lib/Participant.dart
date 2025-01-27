@@ -1,28 +1,27 @@
-import 'Servei.dart';
 import 'Contractacio.dart';
 import 'DatabaseRecord.dart';
 import 'Database.dart';
 import 'Modalitat.dart';
 import 'Producte.dart';
-import 'Contractacio.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
-import 'dart:io';
 
 List<pw.Widget> pdfStateIcons = [
-  pw.Icon(pw.IconData(0xe510), size: 18,),
-  pw.Icon(pw.IconData(0xe86c), size: 18, color: PdfColors.green),
-  pw.Icon(pw.IconData(0xe86c), size: 18, color: PdfColors.red),
+  pw.Icon(const pw.IconData(0xe510), size: 18,),
+  pw.Icon(const pw.IconData(0xe86c), size: 18, color: PdfColors.green),
+  pw.Icon(const pw.IconData(0xe86c), size: 18, color: PdfColors.red),
 ];
 
 
 class Participant  implements DatabaseRecord{
 
+  @override
   int id;
+  @override
   String name;
   int modalitat;
   String dataModificat;
@@ -33,28 +32,29 @@ class Participant  implements DatabaseRecord{
 
   bool registrat;
   bool pagat;
+  bool veg;
 
 
 
-  Participant(  this.id,  this.name, this.modalitat,  this.dataModificat, this.email, this.idioma, this.samarreta,  this.registrat, this.pagat);
+  Participant(  this.id,  this.name, this.modalitat,  this.dataModificat, this.email, this.idioma, this.samarreta,  this.registrat, this.pagat, this.veg);
 
   List<Contractacio> contractacions(){
      var d = Database.shared;
 
-     return d.searchContractacions(( p0) => (p0 as Contractacio).participantId == this.id);
+     return d.searchContractacions(( p0) => (p0 as Contractacio).participantId == id);
   }
 
   @override
   bool isEqual(DatabaseRecord r){
-    if (this.runtimeType != r.runtimeType){
+    if (runtimeType != r.runtimeType){
       return false;
     }
     else{
       var r1 = r as Participant;
-      return this.id == r.id
-          && this.name == r.name
-          && this.registrat == r1.registrat
-          && this.pagat == r1.pagat;
+      return id == r.id
+          && name == r.name
+          && registrat == r1.registrat
+          && pagat == r1.pagat;
 
     }
   }
@@ -71,15 +71,20 @@ class Participant  implements DatabaseRecord{
     String idioma = fields[5];
     String samarreta = fields[6];
     bool enviat = false;
+    bool veg = false;
     if (fields.length >= 26) {
       enviat =  fields[25] != "0";
     }else {
       enviat =  fields[8] == 1;
     }
 
+    if (fields.length >= 27) {
+
+      veg = fields[26] != "0";
+    }
     bool registrat = int.parse(fields[7]) == 1;
 
-    return Participant(codi, nom, modalitat,dataModificat, email, idioma, samarreta, registrat, enviat);
+    return Participant(codi, nom, modalitat,dataModificat, email, idioma, samarreta, registrat, enviat, veg);
   }
 
   String toCSV(){
@@ -88,13 +93,13 @@ class Participant  implements DatabaseRecord{
 
   // Special send routine for mails
 
-Future sendPdf({SmtpServer? server =  null, bool test = true}) async {
+Future sendPdf({SmtpServer? server, bool test = true}) async {
     var pdf = await (await toPdf()).save();
     var stream = Stream.value(
       List<int>.from(pdf),
     );
 
-    var attachment = StreamAttachment(stream, "application/pdf", fileName: name + ".pdf");
+    var attachment = StreamAttachment(stream, "application/pdf", fileName: "$name.pdf");
     attachment.location = Location.attachment;
 
 
@@ -115,10 +120,10 @@ Future sendPdf({SmtpServer? server =  null, bool test = true}) async {
 
     try {
       final sendReport = await send(message, theServer);
-      Database.shared.enviatParticipant(this.id);
+      Database.shared.enviatParticipant(id);
       print("Send message to $name at $email");
     }on MailerException catch (e) {
-      print('Message not sent.' + e.message);
+      print('Message not sent.${e.message}');
       for (var p in e.problems) {
         print('Problem: ${p.code}: ${p.msg}');
       }
@@ -151,7 +156,7 @@ Future sendPdf({SmtpServer? server =  null, bool test = true}) async {
     Modalitat? modalitat = Database.shared.findModalitat(this.modalitat);
     String modalitatNameBasic = modalitat?.name ?? this.modalitat.toString();
 
-    String modalitatName = Database.shared.traduccio(2, this.modalitat, this.idioma) ?? modalitatNameBasic;
+    String modalitatName = Database.shared.traduccio(2, this.modalitat, idioma) ?? modalitatNameBasic;
 
     return pw.Column(
       children: [
@@ -174,7 +179,7 @@ Future sendPdf({SmtpServer? server =  null, bool test = true}) async {
                           fontSize: 24, fontWeight: pw.FontWeight.bold)),
                 ],
               ),
-              pw.Text(this.id.toString(),
+              pw.Text(id.toString(),
                   style: pw.TextStyle(
                       fontSize: 18, fontWeight: pw.FontWeight.bold)),
             ]),
@@ -187,7 +192,7 @@ Future sendPdf({SmtpServer? server =  null, bool test = true}) async {
 
             pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
-                children: [pw.Text(this.name,
+                children: [pw.Text(name,
                     style:
                     pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
                   pw.Text(modalitatName,
@@ -196,7 +201,7 @@ Future sendPdf({SmtpServer? server =  null, bool test = true}) async {
                   pw.Container(height: 10),
                 ]),
             pw.Spacer(),
-            pw.Text(this.samarreta),
+            pw.Text(samarreta),
           ],
         ),
         pw.Container(

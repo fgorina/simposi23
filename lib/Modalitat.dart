@@ -1,20 +1,22 @@
 import 'DatabaseRecord.dart';
-import 'package:decimal/decimal.dart';
 
 class Modalitat  implements DatabaseRecord {
+  @override
   int id;
+  @override
   String name;
 
   Modalitat(this.id, this.name);
 
+  @override
   bool isEqual(DatabaseRecord r){
-    if (this.runtimeType != r.runtimeType){
+    if (runtimeType != r.runtimeType){
       return false;
     }
     else{
       var r1 = r as Modalitat;
-      return this.id == r.id
-          && this.name == r.name;
+      return id == r.id
+          && name == r.name;
     }
   }
 

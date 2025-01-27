@@ -4,7 +4,7 @@ import 'package:simposi23/DatabaseRecord.dart';
 class Table<T extends DatabaseRecord>{
 
   String name;
-  Map<int, T> _data ;
+  final Map<int, T> _data ;
   bool _dirty = false;
 
 

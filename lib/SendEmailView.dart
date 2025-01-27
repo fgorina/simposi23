@@ -1,27 +1,13 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'Participant.dart';
 import 'Database.dart';
-import 'Producte.dart';
-import 'Contractacio.dart';
-import 'screensize_reducers.dart';
-import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
-import 'dart:math';
-import 'dart:io';
-import 'Modalitat.dart';
-import 'Alerts.dart';
-import 'ComprarWidget.dart';
-import 'SlideRoutes.dart';
-import 'package:barcode_widget/barcode_widget.dart';
-import 'package:pdf/pdf.dart';
-import 'package:printing/printing.dart';
-import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 
 class SendEmailView extends StatefulWidget {
   final String title = "Participants";
+
+  const SendEmailView({super.key});
 
   @override
   _SendEmailViewState createState() => _SendEmailViewState();
@@ -30,7 +16,7 @@ class SendEmailView extends StatefulWidget {
 class _SendEmailViewState extends State<SendEmailView> {
   Database db = Database.shared;
   List<bool> selected =
-      Database.shared.allModalitats().map((e) => false).toList() as List<bool>;
+      Database.shared.allModalitats().map((e) => false).toList();
   bool sending = false;
   int itemToSend = 0;
 
@@ -42,55 +28,51 @@ class _SendEmailViewState extends State<SendEmailView> {
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
-        title: Text("Enviament de missatges"),
+        title: const Text("Enviament de missatges"),
       ),
       body: SafeArea(
         child: Column(
           children: [
             Container(height: 40),
-            Text(
+            const Text(
               "Seleccioneu els destinataris",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Container(height: 40),
             Row(children: [
-              Spacer(),
+              const Spacer(),
               Container(
                 width: 250,
-                padding: EdgeInsets.all(0),
+                padding: const EdgeInsets.all(0),
                 child: ToggleButtons(
                     isSelected: selected,
                     borderRadius: const BorderRadius.all(Radius.circular(8)),
                     selectedBorderColor: Colors.lightBlue,
                     selectedColor: Colors.white,
                     fillColor: Colors.lightBlueAccent,
-                    children: db.allModalitats().map((m) {
-                      return Text(m.name);
-                    }).toList(),
                     direction: Axis.vertical,
                     onPressed: (int index) {
                       setState(() {
                         selected[index] = !selected[index];
                       });
-                    }),
+                    },
+                    children: db.allModalitats().map((m) {
+                      return Text(m.name);
+                    }).toList()),
               ),
-              Spacer()
+              const Spacer()
             ]),
-            Spacer(),
-            sending && targets.length > 0 && targets.length > itemToSend
-                ? Container(
+            const Spacer(),
+            sending && targets.isNotEmpty && targets.length > itemToSend
+                ? SizedBox(
                     width: 250,
                     child: LinearProgressIndicator(
                       value: itemToSend / targets.length,
                       semanticsLabel: 'Linear progress indicator',
                     ))
-                : SizedBox.shrink(),
-            Spacer(),
+                : const SizedBox.shrink(),
+            const Spacer(),
             CupertinoButton(
-                child: Text(
-                  "Enviar",
-                  style: TextStyle(color: Colors.white),
-                ),
                 borderRadius: BorderRadius.circular(10),
                 color: Colors.blue,
                 onPressed: () async {
@@ -112,8 +94,12 @@ class _SendEmailViewState extends State<SendEmailView> {
                     });
                     //await Future.delayed(const Duration(milliseconds: 500), () {});
                   }
-                }),
-            Spacer()
+                },
+                child: const Text(
+                  "Enviar",
+                  style: TextStyle(color: Colors.white),
+                )),
+            const Spacer()
           ],
         ),
       ),

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
@@ -14,7 +13,7 @@ class ServeiView extends StatefulWidget {
   final String title = "Servei";
   Servei servei;
 
-  ServeiView(this.servei);
+  ServeiView(this.servei, {super.key});
   @override
   _ServeiViewState createState() => _ServeiViewState();
 }
@@ -30,6 +29,7 @@ class _ServeiViewState extends State<ServeiView> {
   String field = "";
   int idProducte = 1;
 
+  @override
   void initState() {
     super.initState();
     d.addSubscriptor(this);
@@ -41,15 +41,16 @@ class _ServeiViewState extends State<ServeiView> {
     idProducte = widget.servei.idProducte;
   }
 
+  @override
   void dispose() {
     d.removeSubscriptors(this);
     super.dispose();
   }
 
   void modelUpdated(String status, String message, String op) {
-    final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
+    final isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
-    if (status != "OK" && _isTopOfNavigationStack) {
+    if (status != "OK" && isTopOfNavigationStack) {
       //Database.displayAlert(context, "STOP", message);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -68,7 +69,7 @@ class _ServeiViewState extends State<ServeiView> {
 
   @override
   Widget build(BuildContext context) {
-    final _formKey = GlobalKey<FormState>();
+    final formKey = GlobalKey<FormState>();
 
     var formatter = DateFormat("d/M/y H:m:s");
 
@@ -94,7 +95,7 @@ class _ServeiViewState extends State<ServeiView> {
 
     List<DropdownMenuItem<int>> productes = d
         .allProductes()
-        .map((e) => DropdownMenuItem<int>(child: Text(e.name), value: e.id))
+        .map((e) => DropdownMenuItem<int>(value: e.id, child: Text(e.name)))
         .toList();
 
     ScrollController controller = ScrollController();
@@ -109,12 +110,12 @@ class _ServeiViewState extends State<ServeiView> {
 
           actions: icons,
         ),
-        body: Consumer<ScreenHeight>(builder: (context, _res, child) {
+        body: Consumer<ScreenHeight>(builder: (context, res, child) {
           return SafeArea(
-            minimum: EdgeInsets.only(
+            minimum: const EdgeInsets.only(
                 left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
             child: Form(
-              key: _formKey,
+              key: formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -218,28 +219,28 @@ class _ServeiViewState extends State<ServeiView> {
                       : "El nom del camp ha de estar informat!";
                 },
               ),
-                  SizedBox(
+                  const SizedBox(
                     height: 10,
                   ),
                   Row(children: [
-                    Icon(
+                    const Icon(
                       Icons.shopping_cart,
                       color: Colors.grey,
                     ),
-                    SizedBox(width: 15),
-                    Container(
+                    const SizedBox(width: 15),
+                    SizedBox(
                       width: screenWidth(context) - 80,
                       child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               "Producte",
                               textAlign: TextAlign.left,
                               style:
                                   TextStyle(fontSize: 12, color: Colors.grey),
                             ),
                             DropdownButtonFormField<int>(
-                              hint: Text("Seleccioneu el producte"),
+                              hint: const Text("Seleccioneu el producte"),
                               items: productes,
                               value: idProducte,
                               onChanged: (v) {
@@ -252,20 +253,20 @@ class _ServeiViewState extends State<ServeiView> {
                           ]),
                     ),
                   ]),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   Center(
                     child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                            primary: Colors.white30,
+                            backgroundColor: Colors.white30,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18.0),
-                                side: BorderSide(color: Colors.black))),
+                                side: const BorderSide(color: Colors.black))),
                         child: const Text('Guardar'),
                         onPressed: () async {
                           // Validate returns true if the form is valid, or false otherwise.
-                          if (_formKey.currentState!.validate()) {
+                          if (formKey.currentState!.validate()) {
                             print("Validació Correcte");
-                            _formKey.currentState!.save();
+                            formKey.currentState!.save();
 
                             widget.servei.name = name;
                             widget.servei.valid =
@@ -282,7 +283,7 @@ class _ServeiViewState extends State<ServeiView> {
                           }
                         }),
                   ),
-                  Spacer(),
+                  const Spacer(),
                 ],
               ),
             ),

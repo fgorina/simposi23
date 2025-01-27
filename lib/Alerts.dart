@@ -6,7 +6,7 @@ class Alerts {
 // Alerts
 
   static Future<String?> displayTextInputDialog(BuildContext context,
-      {title = "", label: "", message = "", password = false, initialValue = ""}) async {
+      {title = "", label= "", message = "", password = false, initialValue = ""}) async {
     String? theValue = initialValue;
 
     return showDialog(
@@ -14,7 +14,7 @@ class Alerts {
         builder: (context) {
           return AlertDialog(
             title: Text(title),
-            content: Container(
+            content: SizedBox(
             width: 300,
             height: 300,
             child: Column(
@@ -34,24 +34,24 @@ class Alerts {
                     },
 
                   ),
-                  Spacer(),
-                  Divider(),
+                  const Spacer(),
+                  const Divider(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Spacer(),
+                      const Spacer(),
                       CupertinoButton(
-                          child: Text("OK"),
+                          child: const Text("OK"),
                           onPressed: () {
                             Navigator.pop(context, theValue);
                           }),
-                      Spacer(),
+                      const Spacer(),
                       CupertinoButton(
-                          child: Text("Cancel"),
+                          child: const Text("Cancel"),
                           onPressed: () {
                             Navigator.pop(context, null);
                           }),
-                      Spacer(),
+                      const Spacer(),
                     ],
                   ),
                 ]),
@@ -71,8 +71,8 @@ class Alerts {
               message,
             ),
             actions: <Widget>[
-              new LegacyFlatButton(
-                child: new Text("Si",
+              LegacyFlatButton(
+                child: const Text("Si",
                     style: TextStyle(
                       fontSize: 18,
                     )),
@@ -80,8 +80,8 @@ class Alerts {
                   Navigator.of(context).pop(true);
                 },
               ),
-              new LegacyFlatButton(
-                child: new Text("No",
+              LegacyFlatButton(
+                child: const Text("No",
                     style: TextStyle(
                       fontSize: 18,
                     )),
@@ -105,8 +105,8 @@ class Alerts {
               message,
             ),
             actions: <Widget>[
-              new LegacyFlatButton(
-                child: new Text("OK",
+              LegacyFlatButton(
+                child: const Text("OK",
                     style: TextStyle(
                       fontSize: 18,
                     )),

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
@@ -28,6 +27,7 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
   int terminal = 1;
 
 
+  @override
   void initState(){
   super.initState();
   serverAddress = database.server.host;
@@ -43,7 +43,7 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
 
   @override
   Widget build(BuildContext context) {
-    final _formKey = GlobalKey<FormState>();
+    final formKey = GlobalKey<FormState>();
 
     String error = "";
 
@@ -76,17 +76,17 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
       ),
       body: SafeArea(
         minimum:
-        EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
+        const EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
         child: Form(
-          key: _formKey,
+          key: formKey,
           child: Column(children: [
-            Text(
+            const Text(
               "Configuració Inicial",
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
-            Text("S'han d'introduir les dades del servidor"),
-            Divider(),
+            const Text("S'han d'introduir les dades del servidor"),
+            const Divider(),
             labeledSegmentsFromText("Protocol", ["http", "https"],
                 protocol == Protocol.http ? 0 : 1, (i) {
                   setState(() {
@@ -98,7 +98,6 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
                       default:
                         protocol = Protocol.https;
                     }
-                    ;
                   });
                 }),
             TextFormField(
@@ -153,16 +152,16 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
                 return null;
               },
             ),
-            Text(" "),
+            const Text(" "),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                  primary: Colors.white30,
+                  backgroundColor: Colors.white30,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18.0),
-                      side: BorderSide(color: Colors.black))),
+                      side: const BorderSide(color: Colors.black))),
               onPressed: () async {
                 // Validate returns true if the form is valid, or false otherwise.
-                if (_formKey.currentState!.validate()) {
+                if (formKey.currentState!.validate()) {
                   // If the form is valid, display a snackbar. In the real world,
                   // you'd often call a server or save the information in a database.
                   try {
@@ -175,26 +174,26 @@ class _SettingsViewState extends State<SettingsView> with WidgetsBindingObserver
 
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                            content: Text("Error " + database.lastServerError)),
+                            content: Text("Error ${database.lastServerError}")),
                       );
                     } else {
                       ScaffoldMessenger.of(context).hideCurrentSnackBar();
                       Navigator.pop(context);
                     }
                   } on ClientException catch (e){
-                    error = e.toString() + "\n" + e.message + "\n";
+                    error = "$e\n${e.message}\n";
                     ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Error http" + e.toString())),
+                        SnackBar(content: Text("Error http$e")),
 
                     );
 
                     setState(() {});
                   }
 
-                  catch (e, backtrace) {
+                  catch (e) {
                       error = e.toString();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Error " + e.toString())),
+                      SnackBar(content: Text("Error $e")),
 
                     );
                     database.server.host = "";

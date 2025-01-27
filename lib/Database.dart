@@ -13,21 +13,19 @@ import 'Server.dart';
 import 'Texte.dart';
 import 'package:http/http.dart' as http;
 import 'Modalitat.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import "SlideRoutes.dart";
-import 'BacklogListWidget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:decimal/decimal.dart';
 
 bool debugging = true;
 Future showBacklog(BuildContext cnt) async {
-  await Navigator.push(cnt, SlideLeftRoute(widget: BacklogListWidget()));
+  await Navigator.push(cnt, SlideLeftRoute(widget: const BacklogListWidget()));
 }
 
 Map reverseMap(Map map) {
-  Map map1 = Map();
+  Map map1 = {};
 
   map.forEach((key, value) {
     map1[value] = key;
@@ -66,7 +64,7 @@ Map<String, TipusOperacions> operacioString =
 
 class Operacio {
   TipusOperacions op;
-  int _id;
+  final int _id;
 
   Operacio(this.op, this._id);
 
@@ -91,7 +89,7 @@ class Operacio {
   }
 
   String toCSV() {
-    return stringOperacio[op]! + ";" + id.toString();
+    return "${stringOperacio[op]!};$id";
   }
 
   static Operacio fromCSV(String s) {
@@ -124,13 +122,13 @@ class Database {
 
   // BackLog
 
-  List<Operacio> _backlog = [];
+  final List<Operacio> _backlog = [];
   bool _processingBacklog =
       false; // So we don't execute simultaneusly many _procesaBacklog
 // Tables
 
   final Map<String, t.Table<DatabaseRecord>> _tables =
-      Map<String, t.Table<DatabaseRecord>>();
+      <String, t.Table<DatabaseRecord>>{};
 
   List<Participant> selectedParticipants = [];
   Participant? currentParticipant;
@@ -154,22 +152,22 @@ class Database {
   }
 
   Database(List<t.Table<DatabaseRecord>> tables) {
-    tables.forEach((element) {
+    for (var element in tables) {
       _tables[element.name] = element;
-    });
+    }
   }
 
   void _init() async {
     _tables['Participants'] =
-        t.Table<Participant>('Participants', Map<int, Participant>());
-    _tables['Serveis'] = t.Table<Servei>('Serveis', Map<int, Servei>());
+        t.Table<Participant>('Participants', <int, Participant>{});
+    _tables['Serveis'] = t.Table<Servei>('Serveis', <int, Servei>{});
     _tables['Contractacions'] =
-        t.Table<Contractacio>('Contractacions', Map<int, Contractacio>());
-    _tables['Productes'] = t.Table<Producte>('Productes', Map<int, Producte>());
-    _tables['Compres'] = t.Table<Compra>('Compres', Map<int, Compra>());
+        t.Table<Contractacio>('Contractacions', <int, Contractacio>{});
+    _tables['Productes'] = t.Table<Producte>('Productes', <int, Producte>{});
+    _tables['Compres'] = t.Table<Compra>('Compres', <int, Compra>{});
     _tables['Modalitats'] =
-        t.Table<Modalitat>('Modalitats', Map<int, Modalitat>());
-    _tables['Textes'] = t.Table<Texte>('Textes', Map<int, Texte>());
+        t.Table<Modalitat>('Modalitats', <int, Modalitat>{});
+    _tables['Textes'] = t.Table<Texte>('Textes', <int, Texte>{});
 
     try {
       await loadServerCofiguration();
@@ -199,18 +197,12 @@ class Database {
       print(server.url);
     } else {
       var dir = (await getApplicationDocumentsDirectory()).path;
-      var path = dir + "/Config.csv";
+      var path = "$dir/Config.csv";
       var file = File(path);
 
       String s = server.protocol == Protocol.https
           ? "https"
-          : "http" +
-              ";" +
-              server.host +
-              ";" +
-              server.url +
-              ";" +
-              terminal.toString();
+          : "http;${server.host};${server.url};$terminal";
 
       await file.writeAsString(s, flush: true);
     }
@@ -228,7 +220,7 @@ class Database {
       print(server.url);
     } else {
       var dir = (await getApplicationDocumentsDirectory()).path;
-      var path = dir + "/Config.csv";
+      var path = "$dir/Config.csv";
       var file = File(path);
 
       try {
@@ -284,12 +276,7 @@ class Database {
 
     DateFormat formatter = DateFormat("dd/MM/yy");
 
-    return "Compra " +
-        (producte?.name ?? "") +
-        " per " +
-        (participant?.name ?? "") +
-        " el " +
-        formatter.format(compra.data);
+    return "Compra ${producte?.name ?? ""} per ${participant?.name ?? ""} el ${formatter.format(compra.data)}";
   }
 
   // BACKLOG
@@ -331,7 +318,7 @@ class Database {
     int i = _backlog.length;
 
     try {
-      while (_backlog.length > 0 && i > 0) {
+      while (_backlog.isNotEmpty && i > 0) {
         Operacio op = _backlog[0];
 
         switch (op.op) {
@@ -414,7 +401,7 @@ class Database {
         notifySubscriptors("OK", lastServerError, "");
       }
     } catch (e, stacktrace) {
-      print("Error in Backlog\n" + e.toString() + "\n" + stacktrace.toString());
+      print("Error in Backlog\n$e\n$stacktrace");
       lastServerError = e.toString();
       notifySubscriptors("OK", lastServerError, "");
     }
@@ -441,13 +428,13 @@ class Database {
       for (var row in data) {
         if (row.isNotEmpty) {
           Participant p = Participant.fromCSV(row);
-          _tables['Participants']!.addAll([p] as List<Participant>);
+          _tables['Participants']!.addAll([p]);
 
           // Now update contractacions
           List<Contractacio> contractacions =
               Contractacio.fromCSV(row, _tables['Serveis'] as t.Table<Servei>);
           _tables['Contractacions']!
-              .addAll(contractacions as List<Contractacio>);
+              .addAll(contractacions);
         }
       }
 
@@ -474,12 +461,12 @@ class Database {
       var row = data[0];
       if (row.isNotEmpty) {
         Participant p = Participant.fromCSV(row);
-        _tables['Participants']!.addAll([p] as List<Participant>);
+        _tables['Participants']!.addAll([p]);
 
         // Now update contractacions
         List<Contractacio> contractacions =
             Contractacio.fromCSV(row, _tables['Serveis'] as t.Table<Servei>);
-        _tables['Contractacions']!.addAll(contractacions as List<Contractacio>);
+        _tables['Contractacions']!.addAll(contractacions);
         currentParticipant = p;
         currentContractacions = contractacions;
       }
@@ -496,7 +483,7 @@ class Database {
         var row = data[1];
         if (row.isNotEmpty) {
           Participant p = Participant.fromCSV(row);
-          _tables['Participants']!.addAll([p] as List<Participant>);
+          _tables['Participants']!.addAll([p]);
 
           // Now update contractacions
           List<Contractacio> contractacions =
@@ -529,7 +516,7 @@ class Database {
       for (var row in data) {
         if (row.isNotEmpty) {
           Servei p = Servei.fromCSV(row);
-          _tables['Serveis']!.addAll([p] as List<Servei>);
+          _tables['Serveis']!.addAll([p]);
         }
       }
       if (autosave) {
@@ -553,7 +540,7 @@ class Database {
       for (var row in data) {
         if (row.isNotEmpty) {
           Producte p = Producte.fromCSV(row);
-          _tables['Productes']!.addAll([p] as List<Producte>);
+          _tables['Productes']!.addAll([p]);
         }
       }
       if (autosave) {
@@ -579,7 +566,7 @@ class Database {
           Compra compra = Compra.fromCSV(row);
           compra.name = nameForCompra(compra);
 
-          _tables['Compres']!.addAll([compra] as List<Compra>);
+          _tables['Compres']!.addAll([compra]);
         }
       }
       if (autosave) {
@@ -590,7 +577,7 @@ class Database {
   }
 
   Future _updateModalitats(List<String> response,
-      {autosave: true, clear: false}) async {
+      {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
@@ -604,7 +591,7 @@ class Database {
         if (row.isNotEmpty) {
           Modalitat modalitat = Modalitat.fromCSV(row);
 
-          _tables['Modalitats']!.addAll([modalitat] as List<Modalitat>);
+          _tables['Modalitats']!.addAll([modalitat]);
         }
       }
       if (autosave) {
@@ -615,7 +602,7 @@ class Database {
   }
 
   Future _updateTexte(List<String> response,
-      {autosave: true, clear: false}) async {
+      {autosave = true, clear = false}) async {
     var status = response[0];
     var op = response[1];
     var data = response.sublist(2);
@@ -629,7 +616,7 @@ class Database {
         if (row.isNotEmpty) {
           Texte texte = Texte.fromCSV(row);
 
-          _tables['Textes']!.addAll([texte] as List<Texte>);
+          _tables['Textes']!.addAll([texte]);
         }
       }
       if (autosave) {
@@ -653,7 +640,7 @@ class Database {
       } on http.ClientException catch (e) {
         failed = true;
         addToBacklog(Operacio(TipusOperacions.productes, -1));
-        lastServerError = e.toString() + "\n" + e.message;
+        lastServerError = "$e\n${e.message}";
       }
       try {
         await server
@@ -665,7 +652,7 @@ class Database {
       } on http.ClientException catch (e) {
         failed = true;
         addToBacklog(Operacio(TipusOperacions.serveis, -1));
-        lastServerError = e.toString() + "\n" + e.message;
+        lastServerError = "$e\n${e.message}";
       }
       try {
         await server
@@ -677,7 +664,7 @@ class Database {
       } on http.ClientException catch (e) {
         failed = true;
         addToBacklog(Operacio(TipusOperacions.modalitats, -1));
-        lastServerError = e.toString() + "\n" + e.message;
+        lastServerError = "$e\n${e.message}";
       }
 
     }
@@ -694,7 +681,7 @@ class Database {
       } on http.ClientException catch (e) {
         failed = true;
         addToBacklog(Operacio(TipusOperacions.textes, -1));
-        lastServerError = e.toString() + "\n" + e.message;
+        lastServerError = "$e\n${e.message}";
       }
 
       await server
@@ -707,7 +694,7 @@ class Database {
     } on http.ClientException catch (e) {
       failed = true;
       addToBacklog(Operacio(TipusOperacions.participants, -1));
-      lastServerError = e.toString() + "\n" + e.message;
+      lastServerError = "$e\n${e.message}";
     }
 
     if (failed) {
@@ -736,10 +723,10 @@ class Database {
       }
       failed = true;
       addToBacklog(Operacio(TipusOperacions.compres, -1));
-      lastServerError = e.toString() + "\n" + e.message;
+      lastServerError = "$e\n${e.message}";
       try {
         var dir = (await getApplicationDocumentsDirectory()).path;
-        var path = dir + "/Compres.csv";
+        var path = "$dir/Compres.csv";
         var file = File(path);
         var compresData = await file.readAsString();
         await _updateCompres(compresData.split("\n"),
@@ -970,7 +957,7 @@ class Database {
 
       var serveis = searchServeisProducte(producte);
 
-      serveis.forEach((servei) {
+      for (var servei in serveis) {
         int idContractacio = (idParticipant * 100) + servei.id;
         Contractacio? contractacio = findContractacio(idContractacio);
         if (contractacio != null) {
@@ -979,7 +966,7 @@ class Database {
             contractacio.estat = 1;
           }
         }
-      });
+      }
 
       if (findCompra(id) == null) {
         // Add to compres si no existia ja
@@ -987,7 +974,7 @@ class Database {
             Compra(id, "", DateTime.now(), idParticipant, idProducte, 1);
         cpr.name = nameForCompra(cpr);
 
-        _tables["Compres"]!.addAll([cpr] as List<Compra>);
+        _tables["Compres"]!.addAll([cpr]);
       }
 
       saveData();
@@ -1027,7 +1014,7 @@ class Database {
     contractacions.sort((a, b) => a.id.compareTo(b.id));
 
     for (Contractacio c in contractacions) {
-      s = "$s;" + c.estat.toString();
+      s = "$s;${c.estat}";
     }
 
     return s;
@@ -1117,7 +1104,7 @@ class Database {
     var dir = (await getApplicationDocumentsDirectory()).path;
 
     try {
-      var path = dir + "/Productes.csv";
+      var path = "$dir/Productes.csv";
       var file = File(path);
       var productesData = await file.readAsString();
       await _updateProductes(productesData.split("\n"),
@@ -1127,7 +1114,7 @@ class Database {
     }
 
     try {
-      var path = dir + "/Serveis.csv";
+      var path = "$dir/Serveis.csv";
       var file = File(path);
       var serveisData = await file.readAsString();
       await _updateServeis(serveisData.split("\n"),
@@ -1136,7 +1123,7 @@ class Database {
       print("Error loading Serveis.csv ${e.toString()}");
     }
     try {
-      var path = dir + "/Participants.csv";
+      var path = "$dir/Participants.csv";
       var file = File(path);
       var participantsData = await file.readAsString();
       await _updateParticipants(participantsData.split("\n"),
@@ -1145,7 +1132,7 @@ class Database {
       print("Error loading Participants.csv ${e.toString()}");
     }
     try {
-      var path = dir + "/Compres.csv";
+      var path = "$dir/Compres.csv";
       var file = File(path);
       var compresData = await file.readAsString();
       await _updateCompres(compresData.split("\n"),
@@ -1155,7 +1142,7 @@ class Database {
     }
 
     try {
-      var path = dir + "/Modalitats.csv";
+      var path = "$dir/Modalitats.csv";
       var file = File(path);
       var modalitatsData = await file.readAsString();
       await _updateModalitats(modalitatsData.split("\n"),
@@ -1164,7 +1151,7 @@ class Database {
       print("Error loading Modalitats.csv ${e.toString()}");
     }
     try {
-      var path = dir + "/Textes.csv";
+      var path = "$dir/Textes.csv";
       var file = File(path);
       var texteData = await file.readAsString();
       await _updateTexte(texteData.split("\n"), autosave: false, clear: true);
@@ -1184,7 +1171,7 @@ class Database {
       return;
     }
     final String dir = (await getApplicationDocumentsDirectory()).path;
-    var path = dir + "/Backlog.csv";
+    var path = "$dir/Backlog.csv";
     var file = File(path);
 
     String s = _backlog.map((e) => e.toCSV()).join("\n");
@@ -1197,7 +1184,7 @@ class Database {
     }
     try {
       var dir = (await getApplicationDocumentsDirectory()).path;
-      var path = dir + "/Backlog.csv";
+      var path = "$dir/Backlog.csv";
       var file = File(path);
 
       var backlogData = (await file.readAsString()).split("\n");
@@ -1218,27 +1205,25 @@ class Database {
 
     var titles =
         "id;Data;id Participant;id Producte;Terminal;Nom Participant;Nom Prodcte;Preu";
-    return titles +
-        "\n" +
-        compres.map((compra) {
+    return "$titles\n${compres.map((compra) {
           Participant? participant = findParticipant(compra.idParticipant);
           Producte? producte = findProducte(compra.idProducte);
 
           String output = compra.toCSV();
           if (participant != null) {
-            output = output + ";" + participant.name;
+            output = "$output;${participant.name}";
           } else {
-            output = output + ";";
+            output = "$output;";
           }
 
           if (producte != null) {
             output =
-                output + ";" + producte.name + ";" + producte.preu.toString();
+                "$output;${producte.name};${producte.preu}";
           } else {
-            output = output + ";;0.0";
+            output = "$output;;0.0";
           }
           return output;
-        }).join("\n");
+        }).join("\n")}";
   }
 
   String paticipantCSVShare(Participant p) {
@@ -1248,7 +1233,7 @@ class Database {
     contractacions.sort((a, b) => a.id.compareTo(b.id));
 
     for (Contractacio c in contractacions) {
-      s = "$s;" + c.estat.toString();
+      s = "$s;${c.estat}";
     }
 
     return s;
@@ -1260,12 +1245,10 @@ class Database {
     var serveis = allServeis();
     serveis.sort((a, b) => a.id.compareTo(b.id));
 
-    titles += (serveis.map((e) => e.name).join(";")) + ";Modalitat";
+    titles += "${serveis.map((e) => e.name).join(";")};Modalitat";
     var participants = allParticipants();
 
-    return titles +
-        "\n" +
-        participants.map((participant) {
+    return "$titles\n${participants.map((participant) {
           var output = paticipantCSVShare(participant);
           var modalitat = findModalitat(participant.modalitat);
           if (modalitat != null) {
@@ -1274,7 +1257,7 @@ class Database {
             output += ";";
           }
           return output;
-        }).join("\n");
+        }).join("\n")}";
   }
 
   // Funcions específiques
@@ -1385,12 +1368,8 @@ class Database {
 
   List<Servei> searchServeisProducte(Producte p) {
     t.Table<Servei> tab = _tables['Serveis'] as t.Table<Servei>;
-    if (tab != null) {
-      return tab.search((s) => s.idProducte == p.id) as List<Servei>;
-    } else {
-      return [];
+    return tab.search((s) => s.idProducte == p.id);
     }
-  }
 
   List<Contractacio> searchContractacions(bool Function(DatabaseRecord) f) {
     var tab = _tables['Contractacions'];
@@ -1404,12 +1383,8 @@ class Database {
   List<Contractacio> searchContractacionsParticipant(Participant p) {
     t.Table<Contractacio> tab =
         _tables['Contractacions'] as t.Table<Contractacio>;
-    if (tab != null) {
-      return tab.search((c) => c.participantId == p.id) as List<Contractacio>;
-    } else {
-      return [];
+    return tab.search((c) => c.participantId == p.id);
     }
-  }
 
   List<Participant> allParticipants() {
     return _tables['Participants']!.all() as List<Participant>;
@@ -1428,20 +1403,20 @@ class Database {
   }
 
   Map<int, Decimal> compresByTerminal() {
-    var result = Map<int, Decimal>();
+    var result = <int, Decimal>{};
     var ordered = allCompres();
 
-    ordered.forEach((compra) {
+    for (var compra in ordered) {
       var producte = findProducte(compra.idProducte);
       if (producte == null) {
-        return;
+        continue;
       }
 
       var acum = result[compra.terminal] ?? Decimal.zero;
       var value = acum + producte.preu;
 
       result[compra.terminal] = value;
-    });
+    }
 
     return result;
   }
@@ -1469,29 +1444,25 @@ class Database {
     return _tables['Compres']!.count();
   }
 
-  String? traduccio(int id_taula, int id_item, String idioma) {
+  String? traduccio(int idTaula, int idItem, String idioma) {
 
     var tab = _tables['Textes'] as t.Table<Texte>;
-    if (tab != null) {
-      var s =  tab.search(
-              (d) {
-            var d1 = d as Texte;
-            return d1.id_taula == id_taula &&
-                d1.id_item == id_item &&
-                d1.idioma == idioma;
-          }
-        );
+    var s =  tab.search(
+            (d) {
+          var d1 = d;
+          return d1.id_taula == idTaula &&
+              d1.id_item == idItem &&
+              d1.idioma == idioma;
+        }
+      );
 
-          var l = s.map((e) => e.valor).toList();
-      if (l.isEmpty) {
-        return null;
-      } else {
-        return l[0];
-      }
-
-    } else {
+        var l = s.map((e) => e.valor).toList();
+    if (l.isEmpty) {
       return null;
+    } else {
+      return l[0];
     }
 
+  
   }
 }

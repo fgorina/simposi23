@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import "SlideRoutes.dart";
@@ -75,15 +74,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     database.addSubscriptor(this);
   }
 
+  @override
   void dispose() {
     database.removeSubscriptors(this);
     super.dispose();
   }
 
   void modelUpdated(String status, String message, String op) async {
-    final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
+    final isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
-    if (status != "OK" && _isTopOfNavigationStack) {
+    if (status != "OK" && isTopOfNavigationStack) {
       //Database.displayAlert(context, "ERROR in main", message);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -92,7 +92,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       setState(() {});
     }
 
-    else if (status == "OK" && _isTopOfNavigationStack && database.initialized){
+    else if (status == "OK" && isTopOfNavigationStack && database.initialized){
       gotoMainWiew();
     }
     }
@@ -134,14 +134,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       appBar: AppBar(
         title: Text(widget.title, textAlign: TextAlign.center,),
       ),
-      body: SafeArea(
+      body: const SafeArea(
         minimum:
             EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
         child: Center(child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Spacer(),
-            Container(
+            SizedBox(
               width: 224,
               height: 224,
               child: CupertinoActivityIndicator(animating: true, radius: 30),

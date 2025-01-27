@@ -26,7 +26,7 @@ Widget labeledSegmentsFromTextNoTitle(
 
   for (int i = 0; i < segments.length; i++) {
     children[i] = Padding(
-        padding: EdgeInsets.only(left: 5, top: 0.0, right: 5.0, bottom: 0.0),
+        padding: const EdgeInsets.only(left: 5, top: 0.0, right: 5.0, bottom: 0.0),
         child: Text(segments[i]));
   }
   return CupertinoSegmentedControl( children: children, onValueChanged: changed, groupValue: selected);
@@ -40,7 +40,7 @@ Widget labeledSegmentsFromText(
 
   for (int i = 0; i < segments.length; i++) {
     children[i] = Padding(
-        padding: EdgeInsets.only(left: 5, top: 0.0, right: 5.0, bottom: 0.0),
+        padding: const EdgeInsets.only(left: 5, top: 0.0, right: 5.0, bottom: 0.0),
         child: Text(segments[i]));
   }
   return labeledSegments(name, children, selected, changed, enabled: enabled);

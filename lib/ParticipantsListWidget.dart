@@ -4,14 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:simposi23/ParticipantView.dart';
 import 'Database.dart';
 import 'Participant.dart';
-import 'Contractacio.dart';
 import 'Servei.dart';
 import 'Alerts.dart';
 import 'screensize_reducers.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
 import 'Scanner.dart';
 import 'SlideRoutes.dart';
-import 'package:flutter/services.dart';
 import 'dart:math';
 import 'RespostaWidget.dart';
 import 'dart:io';
@@ -23,7 +21,7 @@ class ParticipantsListWidget extends StatefulWidget {
   bool all = true; // If false only not registered
   int serveiId = 0;
 
-  ParticipantsListWidget(bool this.all, int this.serveiId , {Key? key}) : super(key: key);
+  ParticipantsListWidget(this.all, this.serveiId , {Key? key}) : super(key: key);
 
   @override
   _ParticipantsListWidgetState createState() => _ParticipantsListWidgetState();
@@ -37,6 +35,7 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
 
   Servei? elServei;
 
+  @override
   void initState(){
 
      super.initState();
@@ -51,6 +50,7 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
 
   }
 
+  @override
   void dispose() {
     d.removeSubscriptors(this);
     super.dispose();
@@ -58,15 +58,15 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
 
   void modelUpdated(String status, String message, String op){
 
-    final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
+    final isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
-    if (status != "OK" && _isTopOfNavigationStack){
+    if (status != "OK" && isTopOfNavigationStack){
       //Database.displayAlert(context, "Error in List", message);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
       );
     }
-    if(_isTopOfNavigationStack) {
+    if(isTopOfNavigationStack) {
       String s = controller.text;
       search(s, autoOpen: false);
     }
@@ -187,7 +187,7 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
   void selectParticipant(int id) async{
       d.currentParticipant = d.findParticipant(id);
       d.currentContractacions = d.currentParticipant?.contractacions() ?? [];
-      await Navigator.push(context, SlideLeftRoute(widget: ParticipantViewWidget()));
+      await Navigator.push(context, SlideLeftRoute(widget: const ParticipantViewWidget()));
       String s = controller.text;
       search(s, autoOpen: false);
 
@@ -212,7 +212,7 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
     var file = File(path);
     await file.writeAsString(data, flush: true);
 
-    var result = await Share.shareFilesWithResult([path]);
+    var result = await Share.shareXFiles([XFile(path)]);
 
   }
 
@@ -242,13 +242,13 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
     }
 
     if(kIsWeb ||Platform.isAndroid){
-      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  Icon(Icons.share), onPressed: shareParticipants));}
+      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  const Icon(Icons.share), onPressed: shareParticipants));}
       icons.add( IconButton(icon: const Icon(Icons.qr_code), onPressed: scan));
     }else if(Platform.isIOS){
-      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  Icon(CupertinoIcons.share), onPressed: shareParticipants));}
+      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  const Icon(CupertinoIcons.share), onPressed: shareParticipants));}
         icons.add( IconButton(icon: const Icon(Icons.qr_code), onPressed: scan));
     }else{
-      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  Icon(CupertinoIcons.share), onPressed: shareParticipants));}
+      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  const Icon(CupertinoIcons.share), onPressed: shareParticipants));}
 
     }
 
@@ -265,9 +265,9 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
           //backgroundColor: d.lastServerError.isEmpty ? Colors.grey : Colors.red,
 
         ),
-        body: Consumer<ScreenHeight>(builder: (context, _res, child) {
+        body: Consumer<ScreenHeight>(builder: (context, res, child) {
           return SafeArea(
-            minimum: EdgeInsets.only(
+            minimum: const EdgeInsets.only(
                 left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
             child: Column(
               children: [
@@ -276,8 +276,8 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
                   onChanged: search,
                   onSubmitted: validate,
                 ),
-                Container(
-                  height: screenHeight(context) - 200 - _res.keyboardHeight,
+                SizedBox(
+                  height: screenHeight(context) - 200 - res.keyboardHeight,
                   child: ListView.builder(
                       itemCount: d.selectedParticipants.length,
                       itemBuilder: (BuildContext context, int index) {

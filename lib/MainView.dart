@@ -11,8 +11,6 @@ import 'ServeiListWidget.dart';
 import 'dart:math';
 import 'SettingsView.dart';
 import 'Alerts.dart';
-import 'package:mailer/mailer.dart';
-import 'package:mailer/smtp_server.dart';
 import 'SendEmailView.dart';
 
 
@@ -60,6 +58,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
   }
 
+  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     database.removeSubscriptors(this);
@@ -67,9 +66,9 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
   }
 
   void modelUpdated(String status, String message, String op) {
-    final _isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
+    final isTopOfNavigationStack = ModalRoute.of(context)?.isCurrent ?? false;
 
-    if (status != "OK" && _isTopOfNavigationStack) {
+    if (status != "OK" && isTopOfNavigationStack) {
       //Database.displayAlert(context, "ERROR in main", message);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -78,8 +77,8 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
       setState(() {});
     }
 
-    print("MainView isTopOfNavaigationStack $_isTopOfNavigationStack");
-    if (_isTopOfNavigationStack || true) {
+    print("MainView isTopOfNavaigationStack $isTopOfNavigationStack");
+    if (isTopOfNavigationStack || true) {
       setState(() {});
     }
   }
@@ -118,12 +117,12 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
   }
 
   void gotoServeisList() async {
-    await Navigator.push(context, SlideLeftRoute(widget: ServeiListWidget()));
+    await Navigator.push(context, SlideLeftRoute(widget: const ServeiListWidget()));
     setState(() {});
   }
 
   void gotoCompres() async {
-    await Navigator.push(context, SlideLeftRoute(widget: CompresListWidget()));
+    await Navigator.push(context, SlideLeftRoute(widget: const CompresListWidget()));
     setState(() {});
   }
 
@@ -135,7 +134,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
   void sendMails() async {
 
     await Navigator.push(
-        context, SlideLeftRoute(widget: SendEmailView()));
+        context, SlideLeftRoute(widget: const SendEmailView()));
     setState(() {});
 
   }
@@ -201,13 +200,13 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
               });
             }
           },
-          child: Text("Registre",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white30,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18.0),
-                  side: BorderSide(color: Colors.black)))),
+                  side: const BorderSide(color: Colors.black))),
+          child: const Text("Registre",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
     ];
 
     for (Servei servei in database.searchServeis((p0) {
@@ -215,90 +214,89 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
       Servei s = p0 as Servei;
       return (now.isAfter(s.valid.start) && now.isBefore(s.valid.end));
     })) {
-      widgetList.add(Text(" "));
+      widgetList.add(const Text(" "));
       widgetList.add(
         ElevatedButton(
             onPressed: () {
               gotoServei(servei.id);
             },
-            child: Text(servei.name,
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white30,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18.0),
-                    side: BorderSide(color: Colors.black)))),
+                    side: const BorderSide(color: Colors.black))),
+            child: Text(servei.name,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
       );
     }
-    ;
 
     if (admin) {
-      widgetList.add(Text(" "));
-      widgetList.add(Divider(color: Colors.black));
-      widgetList.add(Text(" "));
+      widgetList.add(const Text(" "));
+      widgetList.add(const Divider(color: Colors.black));
+      widgetList.add(const Text(" "));
       widgetList.add(ElevatedButton(
           onPressed: gotoParticipants,
-          child: Text("Participants",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white30,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18.0),
-                  side: BorderSide(color: Colors.black)))));
+                  side: const BorderSide(color: Colors.black))),
+          child: const Text("Participants",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))));
 
-      widgetList.add(Text(" "));
+      widgetList.add(const Text(" "));
       widgetList.add(
         ElevatedButton(
             onPressed: () async {
                 sendMails();
              },
-            child: Text("Enviar missatges",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white30,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18.0),
-                    side: BorderSide(color: Colors.black)))),
+                    side: const BorderSide(color: Colors.black))),
+            child: const Text("Enviar missatges",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
       );
-      widgetList.add(Text(" "));
+      widgetList.add(const Text(" "));
       widgetList.add(
         ElevatedButton(
             onPressed: () {
               gotoCompres();
             },
-            child: Text("Compres",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white30,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18.0),
-                    side: BorderSide(color: Colors.black)))),
+                    side: const BorderSide(color: Colors.black))),
+            child: const Text("Compres",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
       );
-      widgetList.add(Text(" "));
+      widgetList.add(const Text(" "));
       widgetList.add(
         ElevatedButton(
             onPressed: () {
               gotoServeisList();
             },
-            child: Text("Serveis",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white30,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18.0),
-                    side: BorderSide(color: Colors.black)))),
+                    side: const BorderSide(color: Colors.black))),
+            child: const Text("Serveis",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
       );
-      widgetList.add(Text(" "));
+      widgetList.add(const Text(" "));
       widgetList.add(
         ElevatedButton(
             onPressed: () { gotoSettings(); },
-            child: Text("Ajustos",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white30,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(18.0),
-                    side: BorderSide(color: Colors.black)))),
+                    side: const BorderSide(color: Colors.black))),
+            child: const Text("Ajustos",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
       );
     }
     return Scaffold(
@@ -311,7 +309,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
       ),
       body: SafeArea(
         minimum:
-        EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
+        const EdgeInsets.only(left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
         child: Center(
           child: Container(
             alignment: Alignment.center,
