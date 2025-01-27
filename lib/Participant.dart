@@ -32,7 +32,7 @@ class Participant  implements DatabaseRecord{
 
   bool registrat;
   bool pagat;
-  bool veg;
+  bool veg;  // Added 2025 vegetaria
 
 
 
