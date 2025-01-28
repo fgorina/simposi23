@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:simposi23/ParticipantsListWidget.dart';
 import 'dart:math';
 import 'Database.dart';
 import 'Servei.dart';
+import 'Participant.dart';
 
 import 'SlideRoutes.dart';
 import 'package:flutter_keyboard_size/flutter_keyboard_size.dart';
@@ -71,17 +73,37 @@ class _ServeiListWidgetState extends State<ServeiListWidget> {
 
     var toServe = d.searchContractacions((p0) {
       var p = d.findParticipant((p0 as Contractacio).participantId);
-      if (p == null || p.registrat == false) {
+      if (p == null || p.registrat != 1) {
         return false;
       }
       return (p0).estat > 0 &&
           (p0).serveiId == servei.id;
     }).length;
+    var vegs = d.searchContractacions((p0) {
+      var p = d.findParticipant((p0 as Contractacio).participantId);
+      if (p == null || p.registrat != 1 || !p.veg) {
+        return false;
+      }
+      return (p0).estat > 0 &&
+          (p0).serveiId == servei.id;
+    }).length;
+    var normal = toServe - vegs;
     var consumed = d
         .searchContractacions((p0) =>
             (p0 as Contractacio).estat == 2 &&
             (p0).serveiId == servei.id)
         .length;
+    var consumedVegs =  d
+        .searchContractacions((p0) {
+      var p = d.findParticipant((p0 as Contractacio).participantId);
+      if (p == null || !p.veg) {
+        return false;
+      }
+      return (p0 as Contractacio).estat == 2 &&
+        (p0).serveiId == servei.id;
+      }) .length;
+
+
     return Slidable(
       // Specify a key if the Slidable is dismissible.
       key: const ValueKey(0),
@@ -116,7 +138,7 @@ class _ServeiListWidgetState extends State<ServeiListWidget> {
             Text(
               servei.name,
             ),
-            Text("$toServe/$payed")
+            Text("($normal V: $vegs)/$payed" , style: TextStyle(fontSize: 14),) // Text("$toServe/$payed")
           ],
         ),
         subtitle: Column(
@@ -133,12 +155,30 @@ class _ServeiListWidgetState extends State<ServeiListWidget> {
                     colorsProductes[servei.idProducte % colorsProductes.length],
               ),
             ]),
-        onTap: () async {
+        onLongPress: () async {
           print("Opening servei");
           await Navigator.push(
               context, SlideLeftRoute(widget: ServeiView(servei)));
           setState(() {});
         },
+        onTap:() async {
+          print("Listing participants del servei");
+          d.selectedParticipants = d.searchParticipants((p0) {
+            Participant p1 = p0 as Participant;
+            List<Contractacio> l = d.searchContractacionsParticipant(p0).where((cont) => cont.serveiId == servei.id && cont.estat != 0).toList();
+            int x = l.length;
+            return p1.registrat == 1 && x != 0;
+          });
+
+
+
+          d.currentParticipant = null;
+          d.currentContractacions = [];
+          await Navigator.push(
+          context, SlideLeftRoute(widget: ParticipantsListWidget(false, servei.id, false, false)));
+          setState(() {});
+        }
+
       ),
     );
   }

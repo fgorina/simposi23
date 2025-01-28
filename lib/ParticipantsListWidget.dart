@@ -14,14 +14,19 @@ import 'dart:math';
 import 'RespostaWidget.dart';
 import 'dart:io';
 import 'package:share_plus/share_plus.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
+
 
 class ParticipantsListWidget extends StatefulWidget {
   final String title = "Participants";
 
   bool all = true; // If false only not registered
   int serveiId = 0;
+  bool enableSearch = false;
+  bool enableAction = false;
 
-  ParticipantsListWidget(this.all, this.serveiId , {Key? key}) : super(key: key);
+  ParticipantsListWidget(this.all, this.serveiId , this.enableSearch, this.enableAction, { Key? key}) : super(key: key);
 
   @override
   _ParticipantsListWidgetState createState() => _ParticipantsListWidgetState();
@@ -34,6 +39,8 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
   Database d = Database.shared;
 
   Servei? elServei;
+
+  final colors = [Colors.red, Colors.black, Colors.blue];
 
   @override
   void initState(){
@@ -66,7 +73,7 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
         SnackBar(content: Text(message)),
       );
     }
-    if(isTopOfNavigationStack) {
+    if(isTopOfNavigationStack && widget.enableSearch) {
       String s = controller.text;
       search(s, autoOpen: false);
     }
@@ -97,7 +104,7 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
                 (p0) {
                   Participant p1 = p0 as Participant;
                   return p1.name.toLowerCase().contains(searchString)
-                      && (!p1.registrat || widget.all);
+                      && (p1.registrat == 0 || widget.all);
                 });
 
 
@@ -150,7 +157,7 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
                 (p0) {
               Participant p1 = p0 as Participant;
               return p1.name.toLowerCase().contains(searchString)
-                  && (!p1.registrat || widget.all);
+                  && (p1.registrat == 0 || widget.all);
             });
 
       }
@@ -205,7 +212,7 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
   }
 
   void shareParticipants() async {
-    var data = d.shareParticipantsData();
+    var data = d.shareSelectedParticipantsData();
 
     // Save it to a file. That way we may share to Numbers directly
     var path = await d.pathFor("shareParticipants");
@@ -215,7 +222,13 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
     var result = await Share.shareXFiles([XFile(path)]);
 
   }
+  void printSelected() async {
 
+      var pdf = await d.selectedParticipantsPdf(widget.serveiId == 0 ? "Participants" : elServei!.name);
+      await Printing.layoutPdf(
+          onLayout: (PdfPageFormat format) async => pdf.save());
+
+  }
 
   void showError(){
     Alerts.displayAlert(context, "Error de Connexió", d.lastServerError);
@@ -242,13 +255,16 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
     }
 
     if(kIsWeb ||Platform.isAndroid){
-      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  const Icon(Icons.share), onPressed: shareParticipants));}
+      icons.add(IconButton(icon: const Icon(CupertinoIcons.printer), onPressed: printSelected));
+      icons.add (IconButton(icon:  const Icon(Icons.share), onPressed: shareParticipants));
       icons.add( IconButton(icon: const Icon(Icons.qr_code), onPressed: scan));
     }else if(Platform.isIOS){
-      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  const Icon(CupertinoIcons.share), onPressed: shareParticipants));}
-        icons.add( IconButton(icon: const Icon(Icons.qr_code), onPressed: scan));
+      icons.add(IconButton(icon: const Icon(CupertinoIcons.printer), onPressed: printSelected));
+      icons.add (IconButton(icon:  const Icon(CupertinoIcons.share), onPressed: shareParticipants));
+      icons.add( IconButton(icon: const Icon(Icons.qr_code), onPressed: scan));
     }else{
-      if(widget.all && widget.serveiId == 0){icons.add (IconButton(icon:  const Icon(CupertinoIcons.share), onPressed: shareParticipants));}
+      icons.add(IconButton(icon: const Icon(CupertinoIcons.printer), onPressed: printSelected));
+      icons.add (IconButton(icon:  const Icon(CupertinoIcons.share), onPressed: shareParticipants));
 
     }
 
@@ -271,26 +287,29 @@ class _ParticipantsListWidgetState extends State<ParticipantsListWidget> {
                 left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
             child: Column(
               children: [
-                CupertinoSearchTextField(
+                widget.enableSearch ? CupertinoSearchTextField(
                   controller: controller,
                   onChanged: search,
                   onSubmitted: validate,
-                ),
+                ) : SizedBox(),
                 SizedBox(
-                  height: screenHeight(context) - 200 - res.keyboardHeight,
+                  height: screenHeight(context) - 208 - res.keyboardHeight,
                   child: ListView.builder(
                       itemCount: d.selectedParticipants.length,
                       itemBuilder: (BuildContext context, int index) {
-                        return ListTile(title: Text(d.selectedParticipants[index].name, style: TextStyle(color: d.selectedParticipants[index].registrat ? Colors.black : Colors.red)),
+                        return ListTile(title: Text(d.selectedParticipants[index].name +( d.selectedParticipants[index].veg ? " (Veg)" : ""), style: TextStyle(color: colors[d.selectedParticipants[index].registrat])),
 
                           onTap:() {
-                            if(elServei == null) {
+                          if(widget.enableAction) {
+                            if (elServei == null) {
                               selectParticipant(
                                   d.selectedParticipants[index].id);
-                            }else{
-                              consumeixServei(elServei!, d.selectedParticipants[index], false);
+                            } else {
+                              consumeixServei(
+                                  elServei!, d.selectedParticipants[index],
+                                  false);
                             }
-
+                          }
                            });
                       }),
                 ),

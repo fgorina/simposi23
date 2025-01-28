@@ -43,18 +43,19 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
   List<Widget> stateIcons = [];
 
   DateFormat df = DateFormat("dd/MM");
-
+  final colors = [Colors.red, Colors.pink, Colors.cyan];
+  final colors1 = [Colors.green, Colors.pink, Colors.blue];
   @override
   void initState() {
     super.initState();
     stateIcons = [
       Icon(
         Icons.no_accounts,
-        color: d.currentParticipant!.registrat ? Colors.red : Colors.pink,
+        color: colors[d.currentParticipant!.registrat],
       ),
       Icon(
         Icons.check_circle_outline,
-        color: d.currentParticipant!.registrat ? Colors.green : Colors.pink,
+        color: colors1[d.currentParticipant!.registrat],
       ),
       const Icon(
         Icons.check_circle,
@@ -300,7 +301,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
         Text(df.format(contractacio.valid(d).start)),
         IconButton(
           icon: stateIcons[contractacio.estat],
-          onPressed: (contractacio.estat == 0 && p.registrat)
+          onPressed: (contractacio.estat == 0 && p.registrat == 1)
               ? () {
                   comprar(contractacio);
                 }
@@ -338,25 +339,27 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
           icon: const Icon(Icons.warning_amber, color: Colors.red),
           onPressed: showError));
     }
-
+    icons.add(IconButton(
+      onPressed: d.currentParticipant!.registrat == 1 ? () async {
+          if (await Alerts.yesNoAlert(context, "Confirmació",
+              "Esteu segur que voleu fer la sortida de ${d.currentParticipant!.name}") ??
+              false) {
+             registrar();
+          }
+      } : null,
+      icon: const Icon(Icons.logout),
+    ));
     icons.add(IconButton(
       onPressed: () {
         setState(() {
           if (d.currentParticipant != null) {
-            d.currentParticipant!.sendPdf(test: false);
+            d.currentParticipant!.sendPdf(test: true); // CANVIAR
           }
         });
-
-
       },
       icon: const Icon(CupertinoIcons.mail),
-    ));
-    if (d.currentParticipant != null) {
-      if (d.currentParticipant!.pagat){
-        icons.add(const Icon(CupertinoIcons.check_mark));
-    }
-   }
-
+    )
+    );
 
     icons.add(IconButton(
       onPressed: () {
@@ -382,6 +385,13 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
       ));
     }
 
+
+    if (d.currentParticipant != null) {
+      if (d.currentParticipant!.pagat){
+        icons.add(const Icon(CupertinoIcons.check_mark));
+      }
+    }
+
     Modalitat? modalitat = d.findModalitat(d.currentParticipant!.modalitat);
     String modalitatName =
         modalitat?.name ?? d.currentParticipant!.modalitat.toString();
@@ -394,7 +404,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
         appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
-          title: Text(d.currentParticipant!.name),
+          title: Text(d.currentParticipant!.name + ( d.currentParticipant!.veg  ? " (Veg)" : "")),
 
           actions: icons,
         ),
@@ -408,7 +418,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
                     style:
                         const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 Container(height: 10),
-                d.currentParticipant!.registrat
+                d.currentParticipant!.registrat != 0
                     ? const Text("")
                     : ElevatedButton(
                         onPressed: () {

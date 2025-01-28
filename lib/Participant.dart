@@ -30,7 +30,7 @@ class Participant  implements DatabaseRecord{
   String idioma;
   String samarreta;
 
-  bool registrat;
+  int registrat;  // Ho hauriem de canviar a 0-> No arribar, 1 -> Arribat, 2 -> Marxat
   bool pagat;
   bool veg;  // Added 2025 vegetaria
 
@@ -58,6 +58,10 @@ class Participant  implements DatabaseRecord{
 
     }
   }
+
+  String compareValue(){
+    return veg ? "0"+name : "1" + name;
+  }
   // Crea un participant a partir de un registre de wpdj_pagaia_qr_sympo2023
   static Participant fromCSV(String dades){
     var fields = dades.split(";");    // Camps Separats per ;
@@ -82,13 +86,13 @@ class Participant  implements DatabaseRecord{
 
       veg = fields[26] != "0";
     }
-    bool registrat = int.parse(fields[7]) == 1;
+    int registrat = int.parse(fields[7]);
 
     return Participant(codi, nom, modalitat,dataModificat, email, idioma, samarreta, registrat, enviat, veg);
   }
 
   String toCSV(){
-    return  "$id;$name;$modalitat;$dataModificat;$email;$idioma;$samarreta;${registrat?1:0};${pagat?1:0}";
+    return  "$id;$name;$modalitat;$dataModificat;$email;$idioma;$samarreta;$registrat;${pagat?1:0}";
   }
 
   // Special send routine for mails
@@ -140,8 +144,10 @@ Future sendPdf({SmtpServer? server, bool test = true}) async {
 
     pdf.addPage(pw.Page(
         theme: pw.ThemeData.withFont(
-          base: await PdfGoogleFonts.varelaRoundRegular(),
-          bold: await PdfGoogleFonts.varelaRoundRegular(),
+          /*base: await PdfGoogleFonts.varelaRoundRegular(),
+          bold: await PdfGoogleFonts.varelaRoundRegular(),*/
+          base: await PdfGoogleFonts.robotoRegular(),
+          bold: await PdfGoogleFonts.robotoBold(),
           icons: await PdfGoogleFonts.materialIcons(),
         ),
         pageFormat: PdfPageFormat.a4,
@@ -169,7 +175,7 @@ Future sendPdf({SmtpServer? server, bool test = true}) async {
               pw.Image(logo, width: 60),
               pw.Column(
                 children: [
-                  pw.Text("IX Simpòsium Internacional",
+                  pw.Text("X Simpòsium Internacional",
                       textAlign: pw.TextAlign.center,
                       style: pw.TextStyle(
                           fontSize: 24, fontWeight: pw.FontWeight.bold)),
@@ -188,8 +194,8 @@ Future sendPdf({SmtpServer? server, bool test = true}) async {
         pw.Row( mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
           crossAxisAlignment: pw.CrossAxisAlignment.start,
           children: [
+            pw.Text(veg ? "Veg" : ""),
             pw.Spacer(),
-
             pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [pw.Text(name,

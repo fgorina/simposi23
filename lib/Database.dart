@@ -18,6 +18,12 @@ import 'package:intl/intl.dart';
 import "SlideRoutes.dart";
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:decimal/decimal.dart';
+import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server.dart';
 
 bool debugging = true;
 Future showBacklog(BuildContext cnt) async {
@@ -140,12 +146,10 @@ class Database {
 
   String lastServerError = "";
 
-
   String smtpUser = "newsfromsymposium@pagaia.cat";
   String smtpPassword = "qrPERpacogorina";
   String fromEmail = "newsfromsymposium@pagaia.cat";
   String bccEmail = "tresoreria@pagaia.cat";
-
 
   Database._constructor() {
     _init();
@@ -386,10 +390,11 @@ class Database {
             break;
 
           case TipusOperacions.enviat:
-            await server.getData(stringOperacio[TipusOperacions.enviat]!,
-                op.idValue(), terminal, (List<String> response) {
-                  _updateParticipants(response, clear: op.idValue().isEmpty);
-                });
+            await server.getData(
+                stringOperacio[TipusOperacions.enviat]!, op.idValue(), terminal,
+                (List<String> response) {
+              _updateParticipants(response, clear: op.idValue().isEmpty);
+            });
             break;
 
           default:
@@ -428,13 +433,12 @@ class Database {
       for (var row in data) {
         if (row.isNotEmpty) {
           Participant p = Participant.fromCSV(row);
-          _tables['Participants']!.addAll([p]);
+          _tables['Participants']!.addAll(<Participant>[p]);
 
           // Now update contractacions
           List<Contractacio> contractacions =
               Contractacio.fromCSV(row, _tables['Serveis'] as t.Table<Servei>);
-          _tables['Contractacions']!
-              .addAll(contractacions);
+          _tables['Contractacions']!.addAll(contractacions);
         }
       }
 
@@ -461,7 +465,7 @@ class Database {
       var row = data[0];
       if (row.isNotEmpty) {
         Participant p = Participant.fromCSV(row);
-        _tables['Participants']!.addAll([p]);
+        _tables['Participants']!.addAll(<Participant>[p]);
 
         // Now update contractacions
         List<Contractacio> contractacions =
@@ -483,7 +487,7 @@ class Database {
         var row = data[1];
         if (row.isNotEmpty) {
           Participant p = Participant.fromCSV(row);
-          _tables['Participants']!.addAll([p]);
+          _tables['Participants']!.addAll(<Participant>[p]);
 
           // Now update contractacions
           List<Contractacio> contractacions =
@@ -516,7 +520,8 @@ class Database {
       for (var row in data) {
         if (row.isNotEmpty) {
           Servei p = Servei.fromCSV(row);
-          _tables['Serveis']!.addAll([p]);
+          List<Servei> l = <Servei>[p];
+          _tables['Serveis']!.addAll(l);
         }
       }
       if (autosave) {
@@ -540,7 +545,8 @@ class Database {
       for (var row in data) {
         if (row.isNotEmpty) {
           Producte p = Producte.fromCSV(row);
-          _tables['Productes']!.addAll([p]);
+          List<Producte> l = <Producte>[p];
+          _tables['Productes']!.addAll(l);
         }
       }
       if (autosave) {
@@ -566,7 +572,7 @@ class Database {
           Compra compra = Compra.fromCSV(row);
           compra.name = nameForCompra(compra);
 
-          _tables['Compres']!.addAll([compra]);
+          _tables['Compres']!.addAll(<Compra>[compra]);
         }
       }
       if (autosave) {
@@ -590,8 +596,8 @@ class Database {
       for (var row in data) {
         if (row.isNotEmpty) {
           Modalitat modalitat = Modalitat.fromCSV(row);
-
-          _tables['Modalitats']!.addAll([modalitat]);
+          List<Modalitat> l = <Modalitat>[modalitat];
+          _tables['Modalitats']!.addAll(l);
         }
       }
       if (autosave) {
@@ -615,8 +621,8 @@ class Database {
       for (var row in data) {
         if (row.isNotEmpty) {
           Texte texte = Texte.fromCSV(row);
-
-          _tables['Textes']!.addAll([texte]);
+          List<Texte> l = <Texte>[texte];
+          _tables['Textes']!.addAll(l);
         }
       }
       if (autosave) {
@@ -666,17 +672,15 @@ class Database {
         addToBacklog(Operacio(TipusOperacions.modalitats, -1));
         lastServerError = "$e\n${e.message}";
       }
-
     }
 
     try {
-
       try {
         await server
             .getData(stringOperacio[TipusOperacions.textes]!, "", terminal,
                 (List<String> response) {
-              _updateTexte(response, clear: true);
-            });
+          _updateTexte(response, clear: true);
+        });
         lastServerError = "";
       } on http.ClientException catch (e) {
         failed = true;
@@ -769,13 +773,13 @@ class Database {
     } on http.ClientException catch (e) {
       // Proces Local
 
-      if (participant.registrat) {
+      if (participant.registrat >= 2) {
         notifySubscriptors(
-            "ERROR", "{$participant.name} ja està registrat!", "registrar");
+            "ERROR", "{$participant.name} ja ha marxat!", "registrar");
 
         return;
       }
-      participant.registrat = true;
+      participant.registrat = participant.registrat + 1;
       saveData();
       notifySubscriptors("OK", "", "registrar");
 
@@ -817,7 +821,6 @@ class Database {
       addToBacklog(Operacio(TipusOperacions.enviat, id));
     }
   }
-
 
   Future consumir(int id) async {
     // Some checks so things are fast although the conexion is not available:
@@ -869,7 +872,7 @@ class Database {
         return;
       }
 
-      if (!participant.registrat) {
+      if (participant.registrat == 0) {
         notifySubscriptors(
             "ERRORR", " $nom encara NO està registrat ", "consumir");
         return;
@@ -949,7 +952,7 @@ class Database {
 
       // Aqui fem el process local en cas que no hagi sigut possible parlar amb el servidor
 
-      if (!participant.registrat) {
+      if (participant.registrat == 0) {
         notifySubscriptors(
             "ERRORR", " $nom encara NO està registrat ", "comprar");
         return;
@@ -1206,24 +1209,23 @@ class Database {
     var titles =
         "id;Data;id Participant;id Producte;Terminal;Nom Participant;Nom Prodcte;Preu";
     return "$titles\n${compres.map((compra) {
-          Participant? participant = findParticipant(compra.idParticipant);
-          Producte? producte = findProducte(compra.idProducte);
+      Participant? participant = findParticipant(compra.idParticipant);
+      Producte? producte = findProducte(compra.idProducte);
 
-          String output = compra.toCSV();
-          if (participant != null) {
-            output = "$output;${participant.name}";
-          } else {
-            output = "$output;";
-          }
+      String output = compra.toCSV();
+      if (participant != null) {
+        output = "$output;${participant.name}";
+      } else {
+        output = "$output;";
+      }
 
-          if (producte != null) {
-            output =
-                "$output;${producte.name};${producte.preu}";
-          } else {
-            output = "$output;;0.0";
-          }
-          return output;
-        }).join("\n")}";
+      if (producte != null) {
+        output = "$output;${producte.name};${producte.preu}";
+      } else {
+        output = "$output;;0.0";
+      }
+      return output;
+    }).join("\n")}";
   }
 
   String paticipantCSVShare(Participant p) {
@@ -1249,15 +1251,137 @@ class Database {
     var participants = allParticipants();
 
     return "$titles\n${participants.map((participant) {
-          var output = paticipantCSVShare(participant);
-          var modalitat = findModalitat(participant.modalitat);
-          if (modalitat != null) {
-            output += ";${modalitat.name}";
-          } else {
-            output += ";";
-          }
-          return output;
-        }).join("\n")}";
+      var output = paticipantCSVShare(participant);
+      var modalitat = findModalitat(participant.modalitat);
+      if (modalitat != null) {
+        output += ";${modalitat.name}";
+      } else {
+        output += ";";
+      }
+      return output;
+    }).join("\n")}";
+  }
+
+  String shareSelectedParticipantsData() {
+    var titles = "id;Nom;Modalitat;Registrat;";
+
+    var serveis = allServeis();
+    serveis.sort((a, b) => a.id.compareTo(b.id));
+
+    titles += "${serveis.map((e) => e.name).join(";")};Modalitat";
+    var participants = selectedParticipants;
+
+    return "$titles\n${participants.map((participant) {
+      var output = paticipantCSVShare(participant);
+      var modalitat = findModalitat(participant.modalitat);
+      if (modalitat != null) {
+        output += ";${modalitat.name}";
+      } else {
+        output += ";";
+      }
+      return output;
+    }).join("\n")}";
+  }
+
+  int selectedVegs(){
+    int c = 0;
+
+    for(Participant p in selectedParticipants){
+      if (p.veg){
+        c += 1;
+      }
+    }
+    return c;
+  }
+  Future<pw.Document> selectedParticipantsPdf(String title) async {
+    List<Participant> someParticipants = selectedParticipants;
+
+    if(selectedParticipants.length == 0){
+      someParticipants = allParticipants();
+    }
+    someParticipants.sort((p0, p1) => p0.compareValue().compareTo(p1.compareValue()));
+
+    var doc = pw.Document();
+
+    final logo = await imageFromAssetBundle('assets/logo.png');
+    int page = 1;
+
+    int genIndex = 0;
+    int linesPerPage = 40;
+    int total = someParticipants.length;
+    int vegs = selectedVegs();
+    int normal = total - vegs;
+
+    while (genIndex < someParticipants.length) {
+
+        doc.addPage(pw.MultiPage(
+            theme: pw.ThemeData.withFont(
+
+              base: await PdfGoogleFonts.robotoRegular(),
+              bold: await PdfGoogleFonts.robotoBold(),
+              icons: await PdfGoogleFonts.materialIcons(),
+            ),
+            pageFormat: PdfPageFormat.a4,
+            build: (pw.Context pdfContext) {
+              var index = genIndex;
+              var line = 1;
+              var widgets = <pw.Widget>[];
+              widgets.add(
+                pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Image(logo, width: 60),
+                      pw.Spacer(),
+                      pw.Text(title,
+                          textAlign: pw.TextAlign.center,
+                          style: pw.TextStyle(
+                              fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                      pw.Spacer(),
+                      pw.Text(page.toString(),
+                          style: pw.TextStyle(
+                              fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                    ]),
+              );
+
+              if(page == 1){
+                widgets.add(pw.SizedBox(height: 20));
+                widgets.add(
+                  pw.Text("$vegs Veg, $normal Standard,  $total Total", style: pw.TextStyle(
+                      fontSize: 14, fontWeight: pw.FontWeight.bold))
+                );
+
+              }
+              widgets.add(pw.Divider());
+
+              while (line < linesPerPage && index < someParticipants.length) {
+
+                widgets.add(pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Container(
+                          width: 30,
+                          child: pw.Text(
+                              someParticipants[index].veg ? "Veg" : "  ", textAlign: pw.TextAlign.start)),
+                      pw.Text(someParticipants[index].name, textAlign: pw.TextAlign.start),
+                      pw.Spacer(),
+                    ]));
+                if(index < someParticipants.length - 1  && line < linesPerPage && someParticipants[index].veg && !someParticipants[index+1].veg){
+                  widgets.add(pw.Divider());
+                }
+                line += 1;
+                index += 1;
+              }
+              print("Line $line index $index");
+              return widgets;
+            }
+            )
+        );
+      genIndex += linesPerPage;
+      page = page +1 ;
+    } // End of While
+    return doc;
   }
 
   // Funcions específiques
@@ -1340,7 +1464,7 @@ class Database {
   }
 
   List<Participant> searchParticipants(bool Function(DatabaseRecord) f) {
-    var tab = _tables['Participants'] ;
+    var tab = _tables['Participants'];
     if (tab != null) {
       return tab.search(f) as List<Participant>;
     } else {
@@ -1369,7 +1493,7 @@ class Database {
   List<Servei> searchServeisProducte(Producte p) {
     t.Table<Servei> tab = _tables['Serveis'] as t.Table<Servei>;
     return tab.search((s) => s.idProducte == p.id);
-    }
+  }
 
   List<Contractacio> searchContractacions(bool Function(DatabaseRecord) f) {
     var tab = _tables['Contractacions'];
@@ -1384,7 +1508,7 @@ class Database {
     t.Table<Contractacio> tab =
         _tables['Contractacions'] as t.Table<Contractacio>;
     return tab.search((c) => c.participantId == p.id);
-    }
+  }
 
   List<Participant> allParticipants() {
     return _tables['Participants']!.all() as List<Participant>;
@@ -1445,24 +1569,19 @@ class Database {
   }
 
   String? traduccio(int idTaula, int idItem, String idioma) {
-
     var tab = _tables['Textes'] as t.Table<Texte>;
-    var s =  tab.search(
-            (d) {
-          var d1 = d;
-          return d1.id_taula == idTaula &&
-              d1.id_item == idItem &&
-              d1.idioma == idioma;
-        }
-      );
+    var s = tab.search((d) {
+      var d1 = d;
+      return d1.id_taula == idTaula &&
+          d1.id_item == idItem &&
+          d1.idioma == idioma;
+    });
 
-        var l = s.map((e) => e.valor).toList();
+    var l = s.map((e) => e.valor).toList();
     if (l.isEmpty) {
       return null;
     } else {
       return l[0];
     }
-
-  
   }
 }

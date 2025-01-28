@@ -113,10 +113,10 @@ class _CompresListWidgetState extends State<CompresListWidget> {
       tileColor: colorsTerminals[compra.terminal % colorsTerminals.length],
       title: Row(children: [
         SizedBox(
-            width: screenWidth(context) - 110,
+            width: screenWidth(context) - 120,
             child: Text("${formatter.format(compra.data)} $nomProducte")),
         SizedBox(
-            width: 35,
+            width: 40,
             child: Text(
               preu,
               textAlign: TextAlign.end,

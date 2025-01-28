@@ -77,7 +77,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
       setState(() {});
     }
 
-    print("MainView isTopOfNavaigationStack $isTopOfNavigationStack");
+    print("MainView isTopOfNavigationStack $isTopOfNavigationStack");
     if (isTopOfNavigationStack || true) {
       setState(() {});
     }
@@ -89,20 +89,20 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
     database.currentContractacions = [];
 
     await Navigator.push(
-        context, SlideLeftRoute(widget: ParticipantsListWidget(true, 0)));
+        context, SlideLeftRoute(widget: ParticipantsListWidget(true, 0, true, true)));
     setState(() {});
   }
 
   void gotoRegistre() async {
     database.selectedParticipants = database.searchParticipants((p0) {
       Participant p1 = p0 as Participant;
-      return !p1.registrat;
+      return p1.registrat == 0;
     });
     database.currentParticipant = null;
     database.currentContractacions = [];
 
     await Navigator.push(
-        context, SlideLeftRoute(widget: ParticipantsListWidget(false, 0)));
+        context, SlideLeftRoute(widget: ParticipantsListWidget(false, 0, true, true)));
     setState(() {});
   }
 
@@ -112,7 +112,7 @@ class _MainViewState extends State<MainView> with WidgetsBindingObserver {
     database.currentContractacions = [];
 
     await Navigator.push(
-        context, SlideLeftRoute(widget: ParticipantsListWidget(true, id)));
+        context, SlideLeftRoute(widget: ParticipantsListWidget(true, id, true, true)));
     setState(() {});
   }
 
