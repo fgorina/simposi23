@@ -31,12 +31,12 @@ class Participant  implements DatabaseRecord{
   String samarreta;
 
   int registrat;  // Ho hauriem de canviar a 0-> No arribar, 1 -> Arribat, 2 -> Marxat
-  bool pagat;
+  bool enviat;
   bool veg;  // Added 2025 vegetaria
 
 
 
-  Participant(  this.id,  this.name, this.modalitat,  this.dataModificat, this.email, this.idioma, this.samarreta,  this.registrat, this.pagat, this.veg);
+  Participant(  this.id,  this.name, this.modalitat,  this.dataModificat, this.email, this.idioma, this.samarreta,  this.registrat, this.enviat, this.veg);
 
   List<Contractacio> contractacions(){
      var d = Database.shared;
@@ -54,7 +54,7 @@ class Participant  implements DatabaseRecord{
       return id == r.id
           && name == r.name
           && registrat == r1.registrat
-          && pagat == r1.pagat;
+          && enviat == r1.enviat;
 
     }
   }
@@ -74,25 +74,15 @@ class Participant  implements DatabaseRecord{
     String email = fields[4];
     String idioma = fields[5];
     String samarreta = fields[6];
-    bool enviat = false;
-    bool veg = false;
-    if (fields.length >= 26) {
-      enviat =  fields[25] != "0";
-    }else {
-      enviat =  fields[8] == 1;
-    }
-
-    if (fields.length >= 27) {
-
-      veg = fields[26] != "0";
-    }
     int registrat = int.parse(fields[7]);
+    bool veg = fields[8] != "0";
+    bool enviat  =  fields[9] != "0";
 
     return Participant(codi, nom, modalitat,dataModificat, email, idioma, samarreta, registrat, enviat, veg);
   }
 
   String toCSV(){
-    return  "$id;$name;$modalitat;$dataModificat;$email;$idioma;$samarreta;$registrat;${pagat?1:0}";
+    return  "$id;$name;$modalitat;$dataModificat;$email;$idioma;$samarreta;$registrat;${veg?1:0};${enviat?1:0}";
   }
 
   // Special send routine for mails

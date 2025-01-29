@@ -79,7 +79,7 @@ class _SendEmailViewState extends State<SendEmailView> {
                   targets = db.searchParticipants((p) {
                     var pr = p as Participant;
                     var m = p.modalitat;
-                    return selected[m] && !pr.pagat;
+                    return selected[m] && !pr.enviat;
                   });
                   sending = true;
                   itemToSend = 0;

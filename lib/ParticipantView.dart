@@ -387,7 +387,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
 
 
     if (d.currentParticipant != null) {
-      if (d.currentParticipant!.pagat){
+      if (d.currentParticipant!.enviat){
         icons.add(const Icon(CupertinoIcons.check_mark));
       }
     }
@@ -404,7 +404,7 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
         appBar: AppBar(
           // Here we take the value from the MyHomePage object that was created by
           // the App.build method, and use it to set our appbar title.
-          title: Text(d.currentParticipant!.name + ( d.currentParticipant!.veg  ? " (Veg)" : "")),
+          title: Text(""),
 
           actions: icons,
         ),
@@ -414,6 +414,16 @@ class _ParticipantViewWidgetState extends State<ParticipantViewWidget> {
                 left: 20.0, right: 20.0, top: 20.0, bottom: 20.0),
             child: Column(
               children: [
+                Row(children: [
+                  Text(( d.currentParticipant!.veg  ? "Veg" : ""),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Spacer(),
+                Text(d.currentParticipant!.name ,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Spacer(),
+                Text(d.currentParticipant!.samarreta,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ]),
                 Text(modalitatName,
                     style:
                         const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

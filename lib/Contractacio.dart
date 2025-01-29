@@ -4,7 +4,7 @@ import 'Servei.dart';
 import 'Database.dart';
 import 'Table.dart' as t;
 
-
+final int FirstServei = 10;  // Definir com el primer camp de la taula wpdj_pagaia_qr_sympo2023 que correspon a un servei
 
 class Contractacio implements DatabaseRecord{
 
@@ -46,8 +46,8 @@ class Contractacio implements DatabaseRecord{
 
     List<Contractacio> contractacions = [];
     int participantId = int.parse(fields[0]);
-    for (int i = 8; i < fields.length-2; i++){
-       int serveiId = i - 7;
+    for (int i = FirstServei; i < fields.length; i++){
+       int serveiId = i - FirstServei + 1;
        int estat = int.parse(fields[i]);
 
       Servei? servei = serveis.find(serveiId);

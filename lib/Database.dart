@@ -806,13 +806,13 @@ class Database {
     } on http.ClientException catch (e) {
       // Proces Local
 
-      if (participant.pagat) {
+      if (participant.enviat) {
         notifySubscriptors(
             "ERROR", "{$participant.name} ja ha  sigut mailejat!", "enviat");
 
         return;
       }
-      participant.pagat = true;
+      participant.enviat = true;
       saveData();
       notifySubscriptors("OK", "", "enviat");
 
@@ -1251,7 +1251,7 @@ class Database {
     var participants = allParticipants();
 
     return "$titles\n${participants.map((participant) {
-      var output = paticipantCSVShare(participant);
+      var output = paticipantCSV(participant);
       var modalitat = findModalitat(participant.modalitat);
       if (modalitat != null) {
         output += ";${modalitat.name}";
@@ -1272,7 +1272,7 @@ class Database {
     var participants = selectedParticipants;
 
     return "$titles\n${participants.map((participant) {
-      var output = paticipantCSVShare(participant);
+      var output = paticipantCSV(participant);
       var modalitat = findModalitat(participant.modalitat);
       if (modalitat != null) {
         output += ";${modalitat.name}";
